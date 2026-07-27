@@ -1,0 +1,3459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Travyxco Admin | Simplified Management</title>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #141414;
+      --bg-card: #1a1a1a;
+      --bg-tertiary: #222222;
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0a0;
+      --text-muted: #666666;
+      --brand-red: #e82127;
+      --emerald-500: #10b981;
+      --blue-500: #3b82f6;
+      --gold-400: #f59e0b;
+      --purple-500: #8b5cf6;
+      --glass-border: rgba(255,255,255,0.08);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Login Page */
+    .login-page {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a0000 100%);
+    }
+
+    .login-box {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 2.5rem;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .login-box h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+      background: linear-gradient(135deg, #e82127, #f87171);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .login-box .subtitle {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 2rem;
+    }
+
+    .login-box .admin-badge {
+      display: inline-block;
+      background: var(--gold-400);
+      color: #000;
+      padding: 0.15rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 1rem;
+    }
+
+    .login-box .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .login-box .form-label {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.375rem;
+    }
+
+    .login-box .form-input {
+      width: 100%;
+      padding: 0.7rem 0.875rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .login-box .form-input:focus {
+      outline: none;
+      border-color: var(--brand-red);
+    }
+
+    .login-box .btn {
+      width: 100%;
+      padding: 0.8rem;
+      background: var(--brand-red);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .login-box .btn:hover {
+      background: #c41a1f;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(232,33,39,0.3);
+    }
+
+    .login-box .btn:active {
+      transform: scale(0.97);
+    }
+
+    .login-box .error-msg {
+      color: #ef4444;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    .login-box .success-msg {
+      color: var(--emerald-500);
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    /* Admin Dashboard */
+    .admin-dashboard {
+      display: none;
+      padding: 1rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .admin-dashboard.active {
+      display: block;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .top-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .top-bar-logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #e82127, #f87171);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .top-bar-admin-badge {
+      background: var(--gold-400);
+      color: #000;
+      padding: 0.2rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .top-bar-right .user-info {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .btn-logout {
+      padding: 0.4rem 1rem;
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      color: var(--text-secondary);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.3s ease;
+    }
+
+    .btn-logout:hover {
+      background: rgba(239,68,68,0.1);
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat-card .stat-number {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .stat-card .stat-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 0.25rem;
+    }
+
+    .stat-card .stat-number.green { color: var(--emerald-500); }
+    .stat-card .stat-number.red { color: var(--brand-red); }
+    .stat-card .stat-number.gold { color: var(--gold-400); }
+    .stat-card .stat-number.blue { color: var(--blue-500); }
+    .stat-card .stat-number.purple { color: var(--purple-500); }
+
+    /* Tabs */
+    .admin-tabs {
+      display: flex;
+      gap: 0.3rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--glass-border);
+      padding-bottom: 0.5rem;
+    }
+
+    .admin-tab {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .admin-tab:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .admin-tab.active {
+      background: var(--brand-red);
+      color: #fff;
+    }
+
+    .admin-tab .badge-count {
+      background: var(--brand-red);
+      color: #fff;
+      padding: 0.05rem 0.4rem;
+      border-radius: 10px;
+      font-size: 0.6rem;
+      margin-left: 0.3rem;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .controls .search-box {
+      flex: 1;
+      min-width: 180px;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 0.8rem;
+    }
+
+    .controls .search-box:focus {
+      outline: none;
+      border-color: var(--brand-red);
+    }
+
+    .controls .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #fff;
+    }
+
+    .controls .btn-primary { background: var(--brand-red); }
+    .controls .btn-success { background: var(--emerald-500); }
+    .controls .btn-outline { background: transparent; border: 1px solid var(--glass-border); color: var(--text-secondary); }
+    .controls .btn-gold { background: var(--gold-400); color: #000; }
+    .controls .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    .controls .btn:active { transform: scale(0.97); }
+
+    /* User Table */
+    .user-table-wrapper {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      overflow-x: auto;
+    }
+
+    .user-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+    }
+
+    .user-table th {
+      text-align: left;
+      padding: 0.6rem 0.8rem;
+      background: var(--bg-tertiary);
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.6rem;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--glass-border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .user-table td {
+      padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+
+    .user-table tr:hover {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .user-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .user-table .user-email {
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+    }
+
+    .user-table .user-balance {
+      font-weight: 700;
+      color: var(--emerald-500);
+    }
+
+    .user-table .btn-edit {
+      padding: 0.25rem 0.6rem;
+      background: var(--blue-500);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.65rem;
+      transition: all 0.3s ease;
+    }
+
+    .user-table .btn-edit:hover {
+      opacity: 0.8;
+    }
+
+    .user-table .btn-delete {
+      padding: 0.25rem 0.6rem;
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.65rem;
+      transition: all 0.3s ease;
+    }
+
+    .user-table .btn-delete:hover {
+      opacity: 0.8;
+    }
+
+    .user-table .action-btns {
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+    }
+
+    .user-table .status-badge {
+      padding: 0.1rem 0.4rem;
+      border-radius: 10px;
+      font-size: 0.55rem;
+      font-weight: 600;
+    }
+
+    .status-active { background: rgba(16,185,129,0.15); color: var(--emerald-500); }
+    .status-inactive { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .status-pending { background: rgba(245,158,11,0.15); color: var(--gold-400); }
+
+    /* ============================================
+       SIGNALS MANAGEMENT - ENHANCED (P&L HERE)
+    ============================================ */
+    .signal-manager-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .signal-manager-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .signal-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.3rem;
+      border-left: 3px solid var(--gold-400);
+    }
+
+    .signal-item .signal-name {
+      font-weight: 600;
+      font-size: 0.85rem;
+      min-width: 120px;
+    }
+
+    .signal-item .signal-user {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      min-width: 100px;
+    }
+
+    .signal-item .signal-details {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      flex: 1;
+    }
+
+    .signal-item .signal-pl {
+      font-weight: 700;
+      font-size: 0.9rem;
+      min-width: 80px;
+      text-align: right;
+    }
+
+    .signal-item .signal-pl.positive { color: var(--emerald-500); }
+    .signal-item .signal-pl.negative { color: #ef4444; }
+
+    .signal-item .signal-status {
+      font-size: 0.6rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .signal-item .signal-status.active { background: rgba(16,185,129,0.15); color: var(--emerald-500); }
+    .signal-item .signal-status.pending { background: rgba(245,158,11,0.15); color: var(--gold-400); }
+    .signal-item .signal-status.expired { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+    .signal-item .signal-actions {
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .signal-item .signal-actions .pl-input {
+      padding: 0.2rem 0.4rem;
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 0.75rem;
+      width: 100px;
+    }
+
+    .signal-item .signal-actions .pl-input:focus {
+      outline: none;
+      border-color: var(--brand-red);
+    }
+
+    .signal-item .signal-actions .pl-percent-display {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .signal-item .btn-sm {
+      padding: 0.2rem 0.6rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.6rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #fff;
+    }
+
+    .signal-item .btn-sm.profit { background: var(--emerald-500); }
+    .signal-item .btn-sm.loss { background: #ef4444; }
+    .signal-item .btn-sm.edit { background: var(--blue-500); }
+    .signal-item .btn-sm.approve { background: var(--gold-400); color: #000; }
+    .signal-item .btn-sm.decline { background: #ef4444; }
+
+    .signal-item .btn-sm:hover {
+      transform: scale(1.05);
+    }
+
+    .signal-item .signal-cost {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      min-width: 70px;
+    }
+
+    /* ============================================
+       TRADE HISTORY (View Only)
+    ============================================ */
+    .trade-history-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .trade-history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .trade-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      padding: 0.4rem 0.6rem;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.3rem;
+      border-left: 3px solid var(--blue-500);
+    }
+
+    .trade-item .trade-symbol { font-weight: 700; min-width: 60px; }
+    .trade-item .trade-details { font-size: 0.7rem; color: var(--text-muted); flex: 1; }
+    .trade-item .trade-pl { font-weight: 600; font-size: 0.8rem; min-width: 80px; text-align: right; }
+    .trade-item .trade-pl.positive { color: var(--emerald-500); }
+    .trade-item .trade-pl.negative { color: #ef4444; }
+
+    /* ============================================
+       PLAN MANAGEMENT
+    ============================================ */
+    .plan-management-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .plan-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.3rem;
+    }
+
+    .plan-item .plan-name {
+      font-weight: 600;
+      font-size: 0.85rem;
+      min-width: 100px;
+    }
+
+    .plan-item .plan-details {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      flex: 1;
+    }
+
+    .plan-item .plan-cost {
+      font-weight: 700;
+      color: var(--gold-400);
+    }
+
+    .plan-item .plan-actions {
+      display: flex;
+      gap: 0.3rem;
+    }
+
+    .plan-item .btn-sm {
+      padding: 0.15rem 0.5rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.6rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #fff;
+    }
+
+    .plan-item .btn-sm.upgrade { background: var(--gold-400); color: #000; }
+    .plan-item .btn-sm.downgrade { background: #ef4444; }
+
+    /* ============================================
+       MODAL
+    ============================================ */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      max-width: 1000px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(30px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .modal-header h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0 0.5rem;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .modal .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .modal .btn-row .btn {
+      flex: 1;
+      min-width: 100px;
+      padding: 0.6rem 1rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #fff;
+    }
+
+    .modal .btn-save { background: var(--emerald-500); }
+    .modal .btn-save:hover { opacity: 0.8; }
+    .modal .btn-danger { background: #ef4444; }
+    .modal .btn-danger:hover { opacity: 0.8; }
+    .modal .btn-secondary { background: var(--bg-tertiary); color: var(--text-secondary); }
+    .modal .btn-secondary:hover { background: var(--bg-card); }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      font-size: 0.8rem;
+      font-weight: 500;
+      animation: slideInRight 0.3s ease;
+      min-width: 200px;
+    }
+
+    .toast.success { border-left: 3px solid var(--emerald-500); }
+    .toast.error { border-left: 3px solid #ef4444; }
+    .toast.info { border-left: 3px solid var(--blue-500); }
+    .toast.gold { border-left: 3px solid var(--gold-400); }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: var(--brand-red);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+
+    /* Deposit Card */
+    .deposit-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .deposit-card .deposit-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .deposit-card .deposit-user {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .deposit-card .deposit-details {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .deposit-card .deposit-amount {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--emerald-500);
+    }
+
+    .deposit-card .deposit-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .deposit-card .btn-approve {
+      padding: 0.4rem 1rem;
+      background: var(--emerald-500);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .deposit-card .btn-approve:hover {
+      transform: scale(1.05);
+    }
+
+    .deposit-card .btn-decline {
+      padding: 0.4rem 1rem;
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .deposit-card .btn-decline:hover {
+      transform: scale(1.05);
+    }
+
+    /* Address Edit */
+    .address-edit-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .address-edit-card .crypto-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--gold-400);
+      margin-bottom: 0.5rem;
+    }
+
+    .address-edit-card .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .address-edit-card .form-group {
+      margin-bottom: 0.5rem;
+    }
+
+    .address-edit-card .form-group .form-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .address-edit-card .form-group .form-input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 0.8rem;
+      font-family: monospace;
+      transition: all 0.3s ease;
+    }
+
+    .address-edit-card .form-group .form-input:focus {
+      outline: none;
+      border-color: var(--brand-red);
+    }
+
+    .address-edit-card .btn-save-address {
+      padding: 0.6rem 1.5rem;
+      background: var(--emerald-500);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      margin-top: 0.5rem;
+    }
+
+    .address-edit-card .btn-save-address:hover {
+      opacity: 0.8;
+      transform: translateY(-2px);
+    }
+
+    .address-status {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: var(--radius-sm);
+      background: var(--bg-tertiary);
+      display: inline-block;
+    }
+
+    .address-status.success { color: var(--emerald-500); }
+    .address-status.error { color: #ef4444; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .top-bar-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .controls {
+        flex-direction: column;
+      }
+      .controls .search-box {
+        width: 100%;
+      }
+      .user-table th,
+      .user-table td {
+        padding: 0.4rem;
+        font-size: 0.65rem;
+      }
+      .modal {
+        padding: 1rem;
+        max-height: 95vh;
+        padding-bottom: 5rem;
+      }
+      .modal .btn-row .btn {
+        flex: 1 1 100%;
+      }
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      .admin-tabs {
+        gap: 0.2rem;
+      }
+      .admin-tab {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.65rem;
+      }
+      .signal-item {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .signal-item .signal-actions {
+        justify-content: stretch;
+      }
+      .signal-item .signal-actions .pl-input {
+        flex: 1;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .login-box {
+        padding: 1.5rem;
+      }
+    }
+
+    .modal::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .modal::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+    }
+
+    .modal::-webkit-scrollbar-thumb {
+      background: var(--text-muted);
+      border-radius: 4px;
+    }
+
+    .modal::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Page -->
+  <div class="login-page" id="loginPage">
+    <div class="login-box">
+      <span class="admin-badge">🔐 Admin Access</span>
+      <h1>Admin Dashboard</h1>
+      <p class="subtitle">Simplified management system</p>
+      
+      <div id="setupSection" style="display:none; margin-bottom:1.5rem; padding:1rem; background:var(--bg-tertiary); border-radius:var(--radius-sm); border:1px solid var(--gold-400);">
+        <h3 style="color:var(--gold-400); font-size:0.9rem; margin-bottom:0.5rem;">⚠️ First Time Setup</h3>
+        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.75rem;">No admin account found. Create one below:</p>
+        <div class="form-group">
+          <label class="form-label">Admin Email</label>
+          <input type="email" class="form-input" id="setupEmail" value="admin@travyxco.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Admin Password (min 6 chars)</label>
+          <input type="password" class="form-input" id="setupPassword" value="admin123">
+        </div>
+        <button class="btn" onclick="window.setupAdmin()" style="background:var(--gold-400); color:#000;">🔧 Create Admin Account</button>
+        <div id="setupStatus" style="margin-top:0.5rem; font-size:0.8rem;"></div>
+      </div>
+
+      <form id="loginForm" onsubmit="window.handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="adminEmail" placeholder="admin@example.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="adminPassword" placeholder="Enter password" required>
+        </div>
+        <div class="error-msg" id="loginError">Invalid credentials. Please try again.</div>
+        <div class="success-msg" id="loginSuccess">Login successful! Redirecting...</div>
+        <button type="submit" class="btn">🔑 Login to Admin</button>
+      </form>
+      
+      <div style="margin-top:1rem; text-align:center; font-size:0.75rem; color:var(--text-muted);">
+        <span id="connectionStatus">Checking Firebase connection...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Dashboard -->
+  <div class="admin-dashboard" id="adminDashboard">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <span class="top-bar-logo">⚡ Travyxco Admin</span>
+        <span class="top-bar-admin-badge">👑 Admin</span>
+      </div>
+      <div class="top-bar-right">
+        <span class="user-info" id="adminUserInfo">Logged in as: admin@travyxco.com</span>
+        <button class="btn-logout" onclick="window.logout()">🚪 Logout</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number green" id="statUsers">0</div>
+        <div class="stat-label">👥 Total Users</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number gold" id="statBalance">$0</div>
+        <div class="stat-label">💰 Total Platform Value</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number blue" id="statTransactions">0</div>
+        <div class="stat-label">📋 Total Transactions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number red" id="statPending">0</div>
+        <div class="stat-label">⏳ Pending Deposits</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number purple" id="statSignals">0</div>
+        <div class="stat-label">📡 Signal Purchases</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="statTrades">0</div>
+        <div class="stat-label">📊 Total Trades</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="users" onclick="window.switchTab('users')">👥 Users</button>
+      <button class="admin-tab" data-tab="deposits" onclick="window.switchTab('deposits')">💰 Deposits <span class="badge-count" id="pendingBadge">0</span></button>
+      <button class="admin-tab" data-tab="signals" onclick="window.switchTab('signals')">📡 Signals & P&L</button>
+      <button class="admin-tab" data-tab="trades" onclick="window.switchTab('trades')">📊 Trade History</button>
+      <button class="admin-tab" data-tab="plans" onclick="window.switchTab('plans')">⬆ Plans</button>
+      <button class="admin-tab" data-tab="addresses" onclick="window.switchTab('addresses')">🏦 Addresses</button>
+    </div>
+
+    <!-- TAB 1: Users -->
+    <div class="tab-content active" id="tabUsers">
+      <div class="controls">
+        <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search users..." oninput="window.filterUsers()">
+        <button class="btn btn-primary" onclick="window.loadAllUsers()">🔄 Refresh</button>
+        <button class="btn btn-success" onclick="window.exportAllUsers()">📥 Export</button>
+        <button class="btn btn-outline" onclick="window.viewAllTransactions()">📊 All Transactions</button>
+      </div>
+
+      <div class="user-table-wrapper">
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email</th>
+              <th>Value</th>
+              <th>Holdings</th>
+              <th>Plan</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody">
+            <tr>
+              <td colspan="7" style="text-align:center; padding:2rem;">
+                <div class="spinner"></div>
+                <div style="margin-top:0.5rem; color:var(--text-muted);">Loading users...</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: Pending Deposits -->
+    <div class="tab-content" id="tabDeposits">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <h3 style="font-size:1rem;">💰 Pending Deposit Requests</h3>
+        <button class="btn btn-primary" onclick="window.loadPendingDeposits()">🔄 Refresh</button>
+      </div>
+      <div id="pendingDepositsContainer">
+        <div class="empty-state">No pending deposits</div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Signals & P&L (ENHANCED) -->
+    <div class="tab-content" id="tabSignals">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <h3 style="font-size:1rem;">📡 Signal & Trade Profit Management</h3>
+        <button class="btn btn-primary" onclick="window.loadSignalManagement()">🔄 Refresh</button>
+      </div>
+      <div id="signalManagementContainer">
+        <div class="loading"><div class="spinner"></div><div style="margin-top:0.5rem;">Loading signals and trades...</div></div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Trade History (View Only) -->
+    <div class="tab-content" id="tabTrades">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <h3 style="font-size:1rem;">📊 Trade History</h3>
+        <button class="btn btn-primary" onclick="window.loadTradeHistory()">🔄 Refresh</button>
+      </div>
+      <div id="tradeHistoryContainer">
+        <div class="loading"><div class="spinner"></div><div style="margin-top:0.5rem;">Loading trade history...</div></div>
+      </div>
+    </div>
+
+    <!-- TAB 5: Plans -->
+    <div class="tab-content" id="tabPlans">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <h3 style="font-size:1rem;">⬆ Plan Management</h3>
+        <button class="btn btn-primary" onclick="window.loadPlanManagement()">🔄 Refresh</button>
+      </div>
+      <div id="planManagementContainer">
+        <div class="loading"><div class="spinner"></div><div style="margin-top:0.5rem;">Loading plans...</div></div>
+      </div>
+    </div>
+
+    <!-- TAB 6: Crypto Addresses -->
+    <div class="tab-content" id="tabAddresses">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <h3 style="font-size:1rem;">🏦 Crypto Deposit Addresses</h3>
+        <button class="btn btn-primary" onclick="window.loadCryptoAddresses()">🔄 Refresh</button>
+      </div>
+      <div id="cryptoAddressesContainer">
+        <div class="loading"><div class="spinner"></div><div style="margin-top:0.5rem;">Loading addresses...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>✏️ Edit User: <span id="editModalUserName">Loading...</span></h2>
+        <button class="modal-close" onclick="window.closeEditModal()">✕</button>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:0.5rem; background:var(--bg-tertiary); padding:0.75rem 1rem; border-radius:var(--radius-sm); margin-bottom:1rem; font-size:0.75rem; color:var(--text-secondary);">
+        <div><div class="label" style="color:var(--text-muted); font-size:0.6rem; text-transform:uppercase;">UID</div><div style="color:var(--text-primary);" id="editModalUID">Loading...</div></div>
+        <div><div class="label" style="color:var(--text-muted); font-size:0.6rem; text-transform:uppercase;">Email</div><div style="color:var(--text-primary);" id="editModalEmail">Loading...</div></div>
+        <div><div class="label" style="color:var(--text-muted); font-size:0.6rem; text-transform:uppercase;">Joined</div><div style="color:var(--text-primary);" id="editModalCreated">Loading...</div></div>
+        <div><div class="label" style="color:var(--text-muted); font-size:0.6rem; text-transform:uppercase;">Status</div><div style="color:var(--text-primary);" id="editModalStatusBadge">Active</div></div>
+      </div>
+
+      <!-- Basic Info -->
+      <div style="background:var(--bg-tertiary); border-radius:var(--radius-md); padding:1rem; margin-bottom:1rem; border:1px solid var(--glass-border);">
+        <div style="font-weight:600; font-size:0.8rem; margin-bottom:0.75rem; color:var(--text-secondary);">👤 Basic Information</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div class="form-group"><label class="form-label" style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">Display Name</label><input type="text" class="form-input" id="editDisplayName" style="padding:0.4rem 0.6rem; font-size:0.8rem;"></div>
+          <div class="form-group"><label class="form-label" style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">Email</label><input type="email" class="form-input" id="editEmail" style="padding:0.4rem 0.6rem; font-size:0.8rem;"></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-top:0.5rem;">
+          <div class="form-group"><label class="form-label" style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">Plan/Tier</label>
+            <select class="form-input" id="editTier" style="padding:0.4rem 0.6rem; font-size:0.8rem;">
+              <option value="basic">Basic</option>
+              <option value="premium">Premium</option>
+              <option value="vip">VIP</option>
+              <option value="elite">Elite</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label" style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">KYC Status</label>
+            <select class="form-input" id="editKYC" style="padding:0.4rem 0.6rem; font-size:0.8rem;">
+              <option value="not_submitted">Not Submitted</option>
+              <option value="pending">Pending</option>
+              <option value="verified">Verified</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Balance Controls -->
+      <div style="background:var(--bg-tertiary); border-radius:var(--radius-md); padding:1rem; margin-bottom:1rem; border:1px solid var(--glass-border);">
+        <div style="font-weight:600; font-size:0.8rem; margin-bottom:0.75rem; color:var(--text-secondary);">💰 Balance Controls</div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:0.75rem;">
+          <div class="form-group"><label class="form-label" style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">Available Balance</label><input type="number" class="form-input" id="editBalance" step="0.01" style="padding:0.4rem 0.6rem; font-size:0.8rem;"></div>
+          <div class="form-group"><label class="form-label" style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">Trading P&L</label><input type="number" class="form-input" id="editTradingProfit" step="0.01" style="padding:0.4rem 0.6rem; font-size:0.8rem;"></div>
+          <div class="form-group"><label class="form-label" style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">Total Deposits</label><input type="number" class="form-input" id="editTotalDeposits" step="0.01" style="padding:0.4rem 0.6rem; font-size:0.8rem;"></div>
+          <div class="form-group"><label class="form-label" style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">Referral Bonus</label><input type="number" class="form-input" id="editReferralBonus" step="0.01" style="padding:0.4rem 0.6rem; font-size:0.8rem;"></div>
+        </div>
+      </div>
+
+      <!-- Crypto Balances -->
+      <div style="background:var(--bg-tertiary); border-radius:var(--radius-md); padding:1rem; margin-bottom:1rem; border:1px solid var(--glass-border);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <span style="font-weight:600; font-size:0.8rem; color:var(--text-secondary);">💰 Crypto Balances <span class="badge-count" id="cryptoCount">0</span></span>
+          <button class="btn-sm" style="background:var(--emerald-500); color:#fff; border:none; padding:0.2rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.65rem;" onclick="window.addCryptoAsset()">➕ Add</button>
+        </div>
+        <div id="cryptoBalancesContainer"><p style="color:var(--text-muted); font-size:0.75rem;">No crypto assets</p></div>
+      </div>
+
+      <!-- Portfolio Holdings - FIXED: Added delete button for each holding -->
+      <div style="background:var(--bg-tertiary); border-radius:var(--radius-md); padding:1rem; margin-bottom:1rem; border:1px solid var(--glass-border);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <span style="font-weight:600; font-size:0.8rem; color:var(--text-secondary);">📊 Portfolio Holdings <span class="badge-count" id="portfolioCount">0</span></span>
+          <button class="btn-sm" style="background:var(--emerald-500); color:#fff; border:none; padding:0.2rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.65rem;" onclick="window.addPortfolioItem()">➕ Add</button>
+        </div>
+        <div id="portfolioContainer"><p style="color:var(--text-muted); font-size:0.75rem;">No portfolio items</p></div>
+      </div>
+
+      <!-- Purchased Signals -->
+      <div style="background:var(--bg-tertiary); border-radius:var(--radius-md); padding:1rem; margin-bottom:1rem; border:1px solid var(--glass-border);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <span style="font-weight:600; font-size:0.8rem; color:var(--text-secondary);">📡 Purchased Signals <span class="badge-count" id="signalPurchaseCount">0</span></span>
+          <button class="btn-sm" style="background:var(--gold-400); color:#000; border:none; padding:0.2rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.65rem;" onclick="window.addSignalPurchase()">➕ Add</button>
+        </div>
+        <div id="signalPurchasesContainer"><p style="color:var(--text-muted); font-size:0.75rem;">No signal purchases</p></div>
+      </div>
+
+      <!-- Watchlist -->
+      <div style="background:var(--bg-tertiary); border-radius:var(--radius-md); padding:1rem; margin-bottom:1rem; border:1px solid var(--glass-border);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <span style="font-weight:600; font-size:0.8rem; color:var(--text-secondary);">⭐ Watchlist <span class="badge-count" id="watchlistCount">0</span></span>
+          <button class="btn-sm" style="background:var(--emerald-500); color:#fff; border:none; padding:0.2rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.65rem;" onclick="window.addWatchlistItem()">➕ Add</button>
+        </div>
+        <div id="watchlistContainer"><p style="color:var(--text-muted); font-size:0.75rem;">No watchlist items</p></div>
+      </div>
+
+      <!-- Orders -->
+      <div style="background:var(--bg-tertiary); border-radius:var(--radius-md); padding:1rem; margin-bottom:1rem; border:1px solid var(--glass-border);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <span style="font-weight:600; font-size:0.8rem; color:var(--text-secondary);">📈 Orders <span class="badge-count" id="orderCount">0</span></span>
+          <button class="btn-sm" style="background:var(--gold-400); color:#000; border:none; padding:0.2rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.65rem;" onclick="window.addOrder()">➕ Add</button>
+        </div>
+        <div id="ordersContainer"><p style="color:var(--text-muted); font-size:0.75rem;">No orders</p></div>
+      </div>
+
+      <!-- Transactions -->
+      <div style="background:var(--bg-tertiary); border-radius:var(--radius-md); padding:1rem; margin-bottom:1rem; border:1px solid var(--glass-border);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <span style="font-weight:600; font-size:0.8rem; color:var(--text-secondary);">📋 Transactions <span class="badge-count" id="transactionCount">0</span></span>
+          <button class="btn-sm" style="background:var(--gold-400); color:#000; border:none; padding:0.2rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.65rem;" onclick="window.addTransaction()">➕ Add</button>
+        </div>
+        <div id="transactionsContainer"><p style="color:var(--text-muted); font-size:0.75rem;">No transactions</p></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-save" onclick="window.saveUserEdit()">💾 Save All Changes</button>
+        <button class="btn btn-secondary" onclick="window.closeEditModal()">❌ Close</button>
+        <button class="btn btn-danger" onclick="window.deleteUserFromModal()">🗑️ Delete User</button>
+      </div>
+      <div id="editModalStatus" style="margin-top:0.75rem; font-size:0.75rem; color:var(--text-muted); text-align:center;"></div>
+    </div>
+  </div>
+
+  <!-- View All Transactions Modal -->
+  <div class="modal-overlay" id="transactionsModal">
+    <div class="modal" style="max-width: 900px;">
+      <div class="modal-header">
+        <h2>📋 All Transactions</h2>
+        <button class="modal-close" onclick="window.closeTransactionsModal()">✕</button>
+      </div>
+      <div style="overflow-x:auto; max-height:500px; overflow-y:auto;">
+        <table class="user-table" style="font-size:0.7rem;">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Type</th>
+              <th>Asset</th>
+              <th>Amount</th>
+              <th>USD Value</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="transactionsTableBody">
+            <tr><td colspan="7" style="text-align:center; padding:1rem; color:var(--text-muted);">No transactions found.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="btn-row" style="margin-top:1rem;">
+        <button class="btn btn-secondary" onclick="window.closeTransactionsModal()">Close</button>
+        <button class="btn btn-save" onclick="window.exportTransactions()">📥 Export CSV</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyD5HMnlx4AXBgDb60XaH8zmA8Xh0zz6ELM",
+      authDomain: "nexustrade-b06f0.firebaseapp.com",
+      projectId: "nexustrade-b06f0",
+      storageBucket: "nexustrade-b06f0.firebasestorage.app",
+      messagingSenderId: "427697879490",
+      appId: "1:427697879490:web:a41c80be45beb81b197e5b"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Asset prices
+    const ASSET_PRICES = {
+      'BTC': 67450, 'ETH': 3845, 'USDT': 1,
+      'TSLA': 245.67, 'X': 54.20, 'SPACE': 112.80,
+      'NEURAL': 88.50, 'BORING': 42.35, 'SUN': 28.90,
+      'AAPL': 189.45, 'MSFT': 378.92, 'GOOGL': 142.78,
+      'AMZN': 178.23, 'NVDA': 875.34, 'META': 467.89, 'NFLX': 625.89
+    };
+
+    // Default crypto addresses
+    const DEFAULT_CRYPTO_ADDRESSES = {
+      BTC: { address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', network: 'Bitcoin', minDeposit: '0.0001 BTC' },
+      ETH: { address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1', network: 'Ethereum (ERC-20)', minDeposit: '0.01 ETH' },
+      USDT: { address: 'TXFy7h8mQwLxGnKj4Bbq6F92R3pNcVdAe9', network: 'TRC-20', minDeposit: '10 USDT' }
+    };
+
+    // State
+    let allUsers = [];
+    let editingUser = null;
+    let originalUserData = null;
+    let currentEditData = {};
+    let allTransactionsCache = [];
+    let pendingDeposits = [];
+    let cryptoAddressesData = {};
+
+    // ============================================
+    // CHECK ADMIN SETUP
+    // ============================================
+
+    window.checkAdminSetup = async function() {
+      try {
+        const adminDoc = await db.collection('admins').doc('adminAccount').get();
+        if (!adminDoc.exists) {
+          document.getElementById('setupSection').style.display = 'block';
+          document.getElementById('connectionStatus').textContent = '🔧 No admin account found. Please set up one.';
+          document.getElementById('connectionStatus').style.color = 'var(--gold-400)';
+          return false;
+        }
+        document.getElementById('connectionStatus').textContent = '✅ Admin account found. Please login.';
+        document.getElementById('connectionStatus').style.color = 'var(--emerald-500)';
+        return true;
+      } catch (error) {
+        console.error('Error checking admin setup:', error);
+        document.getElementById('connectionStatus').textContent = '⚠️ Error checking admin: ' + error.message;
+        document.getElementById('connectionStatus').style.color = '#ef4444';
+        return false;
+      }
+    };
+
+    // ============================================
+    // SETUP ADMIN ACCOUNT
+    // ============================================
+
+    window.setupAdmin = async function() {
+      const email = document.getElementById('setupEmail').value.trim();
+      const password = document.getElementById('setupPassword').value.trim();
+      const statusEl = document.getElementById('setupStatus');
+
+      if (!email || !password || password.length < 6) {
+        statusEl.textContent = '❌ Please enter valid email and password (min 6 chars)';
+        statusEl.style.color = '#ef4444';
+        return;
+      }
+
+      try {
+        statusEl.textContent = '⏳ Creating admin account...';
+        statusEl.style.color = 'var(--gold-400)';
+
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        await db.collection('admins').doc('adminAccount').set({
+          email: email,
+          uid: user.uid,
+          role: 'admin',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdBy: 'system'
+        });
+
+        await db.collection('users').doc(user.uid).set({
+          email: email,
+          displayName: 'Admin',
+          role: 'admin',
+          balance: 0,
+          tradingProfit: 0,
+          totalDeposits: 0,
+          referralBonusBalance: 0,
+          cryptoBalances: {},
+          portfolio: {},
+          purchasedSignals: [],
+          watchlist: [],
+          transactions: [],
+          orders: [],
+          tier: 'basic',
+          kycStatus: 'verified',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        statusEl.textContent = '✅ Admin account created successfully! Please login.';
+        statusEl.style.color = 'var(--emerald-500)';
+        showToast('✅ Admin account created!', 'success');
+
+        setTimeout(() => {
+          document.getElementById('setupSection').style.display = 'none';
+          document.getElementById('connectionStatus').textContent = '✅ Admin account ready. Please login.';
+          document.getElementById('connectionStatus').style.color = 'var(--emerald-500)';
+        }, 2000);
+
+      } catch (error) {
+        console.error('Setup error:', error);
+        statusEl.textContent = '❌ Error: ' + error.message;
+        statusEl.style.color = '#ef4444';
+        showToast('❌ Setup failed: ' + error.message, 'error');
+      }
+    };
+
+    // ============================================
+    // LOGIN HANDLING
+    // ============================================
+
+    window.handleLogin = async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value.trim();
+      const errorEl = document.getElementById('loginError');
+      const successEl = document.getElementById('loginSuccess');
+
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+
+      if (!email || !password) {
+        errorEl.textContent = 'Please enter email and password';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        const adminDoc = await db.collection('admins').doc('adminAccount').get();
+        if (!adminDoc.exists || adminDoc.data().uid !== user.uid) {
+          await auth.signOut();
+          errorEl.textContent = '❌ This account is not an admin.';
+          errorEl.style.display = 'block';
+          return;
+        }
+
+        successEl.textContent = '✅ Login successful! Redirecting...';
+        successEl.style.display = 'block';
+        showToast('✅ Login successful!', 'success');
+
+        setTimeout(() => {
+          document.getElementById('loginPage').style.display = 'none';
+          document.getElementById('adminDashboard').classList.add('active');
+          document.getElementById('adminUserInfo').textContent = `Logged in as: ${email}`;
+          loadAllUsers();
+        }, 500);
+
+      } catch (error) {
+        console.error('Login error:', error);
+        errorEl.textContent = '❌ ' + error.message;
+        errorEl.style.display = 'block';
+        showToast('❌ Login failed: ' + error.message, 'error');
+      }
+    };
+
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        try {
+          const adminDoc = await db.collection('admins').doc('adminAccount').get();
+          if (adminDoc.exists && adminDoc.data().uid === user.uid) {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('adminDashboard').classList.add('active');
+            document.getElementById('adminUserInfo').textContent = `Logged in as: ${user.email}`;
+            loadAllUsers();
+          }
+        } catch (error) {
+          console.warn('Auth state check error:', error);
+        }
+      }
+    });
+
+    window.logout = async function() {
+      await auth.signOut();
+      document.getElementById('loginPage').style.display = 'flex';
+      document.getElementById('adminDashboard').classList.remove('active');
+      showToast('Logged out', 'info');
+    };
+
+    // ============================================
+    // TAB SWITCHING
+    // ============================================
+
+    window.switchTab = function(tab) {
+      document.querySelectorAll('.admin-tab').forEach(btn => btn.classList.remove('active'));
+      const tabBtn = document.querySelector(`.admin-tab[data-tab="${tab}"]`);
+      if (tabBtn) tabBtn.classList.add('active');
+      
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      const tabMap = {
+        'users': 'tabUsers',
+        'deposits': 'tabDeposits',
+        'signals': 'tabSignals',
+        'trades': 'tabTrades',
+        'plans': 'tabPlans',
+        'addresses': 'tabAddresses'
+      };
+      
+      const tabId = tabMap[tab];
+      if (tabId) {
+        const content = document.getElementById(tabId);
+        if (content) content.classList.add('active');
+      }
+      
+      if (tab === 'deposits') loadPendingDeposits();
+      else if (tab === 'signals') loadSignalManagement();
+      else if (tab === 'trades') loadTradeHistory();
+      else if (tab === 'plans') loadPlanManagement();
+      else if (tab === 'addresses') loadCryptoAddresses();
+    };
+
+    // ============================================
+    // LOAD USERS
+    // ============================================
+
+    window.loadAllUsers = async function() {
+      try {
+        if (!auth.currentUser) {
+          showToast('⚠️ Please login first', 'error');
+          return;
+        }
+
+        const tbody = document.getElementById('userTableBody');
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem;"><div class="spinner"></div><div style="margin-top:0.5rem; color:var(--text-muted);">Loading users...</div></td></tr>';
+
+        const snapshot = await db.collection('users').get();
+        allUsers = [];
+        let totalBalance = 0;
+        let totalTx = 0;
+        let pendingCount = 0;
+        let totalSignals = 0;
+        let totalTrades = 0;
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.role === 'admin') return;
+          
+          const user = {
+            uid: doc.id,
+            ...data,
+            balance: data.balance || 0,
+            tradingProfit: data.tradingProfit || 0,
+            totalDeposits: data.totalDeposits || 0,
+            referralBonusBalance: data.referralBonusBalance || 0,
+            cryptoBalances: data.cryptoBalances || {},
+            portfolio: data.portfolio || {},
+            purchasedSignals: data.purchasedSignals || [],
+            watchlist: data.watchlist || [],
+            transactions: data.transactions || [],
+            orders: data.orders || [],
+            notifications: data.notifications || [],
+            displayName: data.displayName || 'User',
+            email: data.email || '',
+            tier: data.tier || 'basic',
+            kycStatus: data.kycStatus || 'not_submitted',
+            createdAt: data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt)) : new Date(),
+            lastLogin: data.lastLogin ? (data.lastLogin.toDate ? data.lastLogin.toDate() : new Date(data.lastLogin)) : new Date()
+          };
+          allUsers.push(user);
+
+          totalBalance += calculateUserValue(user);
+          totalTx += (user.transactions || []).length;
+          totalSignals += (user.purchasedSignals || []).length;
+          totalTrades += (user.orders || []).length;
+          
+          (user.transactions || []).forEach(tx => {
+            if (tx.type === 'Deposit' && tx.status === 'pending') pendingCount++;
+          });
+        });
+
+        document.getElementById('statUsers').textContent = allUsers.length;
+        document.getElementById('statBalance').textContent = '$' + totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('statTransactions').textContent = totalTx;
+        document.getElementById('statPending').textContent = pendingCount;
+        document.getElementById('statSignals').textContent = totalSignals;
+        document.getElementById('statTrades').textContent = totalTrades;
+        document.getElementById('pendingBadge').textContent = pendingCount;
+
+        renderUserTable(allUsers);
+        showToast(`✅ Loaded ${allUsers.length} users`, 'success');
+
+      } catch (error) {
+        console.error('Error loading users:', error);
+        document.getElementById('userTableBody').innerHTML = `
+          <tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">
+            ⚠️ Error loading users: ${error.message}
+          </td></tr>`;
+        showToast('❌ Error loading users: ' + error.message, 'error');
+      }
+    };
+
+    function calculateUserValue(user) {
+      let total = user.balance || 0;
+      total += user.tradingProfit || 0;
+      total += user.referralBonusBalance || 0;
+      
+      const cb = user.cryptoBalances || {};
+      for (const [sym, amount] of Object.entries(cb)) {
+        const price = ASSET_PRICES[sym] || 0;
+        total += amount * price;
+      }
+      
+      const portfolio = user.portfolio || {};
+      for (const [symbol, holding] of Object.entries(portfolio)) {
+        const price = ASSET_PRICES[symbol] || 0;
+        if (holding && holding.shares) {
+          total += holding.shares * price;
+        }
+      }
+      
+      return total;
+    }
+
+    function renderUserTable(users) {
+      const tbody = document.getElementById('userTableBody');
+      if (!users || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">No users found.</td></tr>';
+        return;
+      }
+
+      let html = '';
+      users.forEach(user => {
+        const totalValue = calculateUserValue(user);
+        const displayName = user.displayName || 'User';
+        const email = user.email || 'No email';
+        const portfolioCount = Object.keys(user.portfolio || {}).length;
+        const tierNames = { basic: 'Basic', premium: 'Premium', vip: 'VIP', elite: 'Elite' };
+        const tierColor = { basic: '#666', premium: '#3b82f6', vip: '#f59e0b', elite: '#e82127' };
+
+        html += `
+          <tr>
+            <td>
+              <strong>${displayName}</strong>
+              <br><span style="font-size:0.6rem; color:var(--text-muted);">${user.uid.substring(0, 12)}...</span>
+            </td>
+            <td><span class="user-email">${email}</span></td>
+            <td><span class="user-balance">$${totalValue.toFixed(2)}</span></td>
+            <td style="font-size:0.7rem; color:var(--text-secondary);">${portfolioCount} assets</td>
+            <td><span style="color:${tierColor[user.tier] || '#666'}; font-weight:600; font-size:0.7rem;">${tierNames[user.tier] || 'Basic'}</span></td>
+            <td>
+              <span class="status-badge ${user.kycStatus === 'verified' ? 'status-active' : 'status-pending'}">
+                ${user.kycStatus === 'verified' ? '✅ Verified' : user.kycStatus === 'pending' ? '⏳ Pending' : '📝 Not Verified'}
+              </span>
+            </td>
+            <td>
+              <div class="action-btns">
+                <button class="btn-edit" onclick="window.openEditModal('${user.uid}')">✏️ Edit</button>
+                <button class="btn-delete" onclick="window.deleteUser('${user.uid}')">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    window.filterUsers = function() {
+      const query = document.getElementById('searchBox').value.toLowerCase().trim();
+      if (!query) {
+        renderUserTable(allUsers);
+        return;
+      }
+      const filtered = allUsers.filter(user => {
+        const name = (user.displayName || '').toLowerCase();
+        const email = (user.email || '').toLowerCase();
+        const uid = user.uid.toLowerCase();
+        return name.includes(query) || email.includes(query) || uid.includes(query);
+      });
+      renderUserTable(filtered);
+    };
+
+    // ============================================
+    // PENDING DEPOSITS
+    // ============================================
+
+    window.loadPendingDeposits = async function() {
+      try {
+        const container = document.getElementById('pendingDepositsContainer');
+        container.innerHTML = '<div class="loading"><div class="spinner"></div><div style="margin-top:0.5rem;">Loading deposits...</div></div>';
+
+        const snapshot = await db.collection('users').get();
+        pendingDeposits = [];
+        
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.role === 'admin') return;
+          
+          const transactions = data.transactions || [];
+          transactions.forEach(tx => {
+            if (tx.type === 'Deposit' && tx.status === 'pending') {
+              pendingDeposits.push({
+                userId: doc.id,
+                userDisplayName: data.displayName || 'User',
+                userEmail: data.email || 'No email',
+                ...tx,
+                txId: tx.id || Date.now().toString()
+              });
+            }
+          });
+        });
+
+        pendingDeposits.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        document.getElementById('statPending').textContent = pendingDeposits.length;
+        document.getElementById('pendingBadge').textContent = pendingDeposits.length;
+
+        renderPendingDeposits();
+
+      } catch (error) {
+        console.error('Error loading pending deposits:', error);
+        document.getElementById('pendingDepositsContainer').innerHTML = `<div class="empty-state">❌ Error loading deposits: ${error.message}</div>`;
+      }
+    };
+
+    function renderPendingDeposits() {
+      const container = document.getElementById('pendingDepositsContainer');
+      
+      if (pendingDeposits.length === 0) {
+        container.innerHTML = '<div class="empty-state">🎉 No pending deposits</div>';
+        return;
+      }
+
+      let html = '';
+      pendingDeposits.forEach(deposit => {
+        const dateStr = deposit.date ? new Date(deposit.date).toLocaleString() : 'Unknown';
+        html += `
+          <div class="deposit-card">
+            <div class="deposit-info">
+              <div class="deposit-user">${deposit.userDisplayName}</div>
+              <div class="deposit-details">
+                📧 ${deposit.userEmail} • ${deposit.asset} • ${dateStr}
+                <br><span style="font-size:0.6rem; color:var(--text-muted);">ID: ${deposit.txId}</span>
+              </div>
+            </div>
+            <div class="deposit-amount">$${(deposit.usdValue || 0).toFixed(2)}</div>
+            <div class="deposit-actions">
+              <button class="btn-approve" onclick="window.approveDeposit('${deposit.userId}', '${deposit.txId}')">✅ Approve</button>
+              <button class="btn-decline" onclick="window.declineDeposit('${deposit.userId}', '${deposit.txId}')">❌ Decline</button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    window.approveDeposit = async function(userId, txId) {
+      if (!confirm(`Approve this deposit?`)) return;
+
+      try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        const userData = userDoc.data();
+        const transactions = userData.transactions || [];
+        
+        const updatedTransactions = transactions.map(tx => {
+          if (tx.id === txId && tx.type === 'Deposit' && tx.status === 'pending') {
+            return { ...tx, status: 'completed' };
+          }
+          return tx;
+        });
+
+        const deposit = pendingDeposits.find(d => d.txId === txId);
+        const newBalance = (userData.balance || 0) + (deposit?.usdValue || 0);
+        const newTotalDeposits = (userData.totalDeposits || 0) + (deposit?.usdValue || 0);
+
+        await db.collection('users').doc(userId).update({
+          transactions: updatedTransactions,
+          balance: newBalance,
+          totalDeposits: newTotalDeposits
+        });
+
+        showToast(`✅ Deposit approved! Added $${(deposit?.usdValue || 0).toFixed(2)}`, 'success');
+        
+        await loadPendingDeposits();
+        await loadAllUsers();
+
+      } catch (error) {
+        console.error('Error approving deposit:', error);
+        showToast('❌ Error approving deposit: ' + error.message, 'error');
+      }
+    };
+
+    window.declineDeposit = async function(userId, txId) {
+      if (!confirm(`Decline this deposit?`)) return;
+
+      try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        const userData = userDoc.data();
+        const transactions = userData.transactions || [];
+        
+        const updatedTransactions = transactions.map(tx => {
+          if (tx.id === txId && tx.type === 'Deposit' && tx.status === 'pending') {
+            return { ...tx, status: 'failed' };
+          }
+          return tx;
+        });
+
+        await db.collection('users').doc(userId).update({
+          transactions: updatedTransactions
+        });
+
+        showToast(`❌ Deposit declined`, 'info');
+        await loadPendingDeposits();
+        await loadAllUsers();
+
+      } catch (error) {
+        console.error('Error declining deposit:', error);
+        showToast('❌ Error declining deposit: ' + error.message, 'error');
+      }
+    };
+
+    // ============================================
+    // SIGNAL MANAGEMENT (WITH P&L)
+    // ============================================
+
+    window.loadSignalManagement = async function() {
+      const container = document.getElementById('signalManagementContainer');
+      
+      container.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <div style="margin-top:0.5rem;">Loading signals and trades...</div>
+        </div>
+      `;
+
+      try {
+        const snapshot = await db.collection('users').get();
+        let allItems = [];
+        
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.role === 'admin') return;
+          
+          const signals = data.purchasedSignals || [];
+          signals.forEach((signal, index) => {
+            if (!signal.id) {
+              signal.id = `${doc.id}_signal_${Date.now()}_${index}`;
+            }
+            allItems.push({
+              userId: doc.id,
+              userDisplayName: data.displayName || 'User',
+              userEmail: data.email || 'No email',
+              type: 'signal',
+              signalId: signal.id,
+              index: index,
+              id: signal.id,
+              name: signal.name || 'Unknown Signal',
+              cost: signal.price || 0,
+              profit: signal.signalProfit || 0,
+              status: signal.status || 'active',
+              purchasedAt: signal.purchasedAt || new Date().toISOString(),
+              percentage: signal.percentage || 0,
+              rawSignal: signal
+            });
+          });
+
+          const orders = data.orders || [];
+          orders.forEach(order => {
+            if (order.status === 'cancelled' || order.status === 'failed') return;
+            const price = ASSET_PRICES[order.symbol] || 0;
+            const quantity = order.quantity || 0;
+            const tradePrice = order.price || 0;
+            const cost = quantity * tradePrice;
+            const value = quantity * price;
+            const pl = value - cost;
+            
+            allItems.push({
+              userId: doc.id,
+              userDisplayName: data.displayName || 'User',
+              userEmail: data.email || 'No email',
+              type: 'trade',
+              id: order.id || Date.now().toString(),
+              name: order.symbol + ' (' + (order.type || 'Trade') + ')',
+              cost: cost,
+              profit: pl,
+              status: order.status || 'active',
+              purchasedAt: order.date || new Date().toISOString(),
+              orderType: order.type || 'Buy',
+              quantity: quantity,
+              price: tradePrice
+            });
+          });
+        });
+
+        allItems.sort((a, b) => new Date(b.purchasedAt) - new Date(a.purchasedAt));
+
+        renderSignalManagement(allItems);
+
+      } catch (error) {
+        console.error('Error loading signal data:', error);
+        container.innerHTML = `<div class="empty-state">⚠️ Error: ${error.message}</div>`;
+      }
+    };
+
+    function renderSignalManagement(allItems) {
+      const container = document.getElementById('signalManagementContainer');
+      
+      if (allItems.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="padding:3rem;">
+            <div style="font-size:3rem; margin-bottom:1rem;">📡</div>
+            <h3 style="color:var(--text-primary); margin-bottom:0.5rem;">No Signals or Trades</h3>
+            <p style="color:var(--text-muted);">Users haven't purchased any signals or made any trades yet.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const itemsByUser = {};
+      allItems.forEach(item => {
+        if (!itemsByUser[item.userId]) {
+          itemsByUser[item.userId] = {
+            userDisplayName: item.userDisplayName,
+            userEmail: item.userEmail,
+            items: []
+          };
+        }
+        itemsByUser[item.userId].items.push(item);
+      });
+
+      let html = '';
+      let totalItems = 0;
+
+      for (const [userId, data] of Object.entries(itemsByUser)) {
+        const items = data.items;
+        totalItems += items.length;
+        let userTotalPL = 0;
+        let userTotalCost = 0;
+
+        items.forEach(item => {
+          userTotalPL += item.profit;
+          userTotalCost += item.cost;
+        });
+
+        html += `
+          <div class="signal-manager-card">
+            <div class="signal-manager-header">
+              <div>
+                <span style="font-weight:600; font-size:0.95rem;">${data.userDisplayName}</span>
+                <span style="font-size:0.65rem; color:var(--text-muted); margin-left:0.5rem;">${data.userEmail}</span>
+                <span style="font-size:0.6rem; color:var(--text-muted); margin-left:0.5rem;">${items.length} items</span>
+              </div>
+              <div style="font-size:0.8rem;">
+                Total P&L: <span style="font-weight:700; color:${userTotalPL >= 0 ? 'var(--emerald-500)' : '#ef4444'};">${userTotalPL >= 0 ? '+' : ''}$${userTotalPL.toFixed(2)}</span>
+              </div>
+            </div>
+        `;
+
+        items.forEach((item) => {
+          const profitColor = item.profit >= 0 ? 'positive' : 'negative';
+          const typeIcon = item.type === 'signal' ? '📡' : '📊';
+          const statusClass = item.status === 'active' ? 'active' : item.status === 'pending' ? 'pending' : 'expired';
+          const profitPercent = item.cost > 0 ? (item.profit / item.cost) * 100 : 0;
+          
+          const itemKey = item.type === 'signal' ? item.signalId : `${item.id}_trade`;
+          
+          html += `
+            <div class="signal-item" id="signalItem_${userId}_${itemKey}">
+              <span class="signal-name">${typeIcon} ${item.name}</span>
+              <span class="signal-user">${data.userDisplayName}</span>
+              <span class="signal-cost">Cost: $${item.cost.toFixed(2)}</span>
+              <span class="signal-pl ${profitColor}">
+                ${item.profit >= 0 ? '+' : ''}$${item.profit.toFixed(2)}
+              </span>
+              <span style="font-size:0.65rem; color:var(--text-muted); min-width:60px;">
+                ${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%
+              </span>
+              <span class="signal-status ${statusClass}">${item.status}</span>
+              <div class="signal-actions">
+                <input type="number" class="pl-input" id="plAmount_${userId}_${itemKey}" 
+                       value="${item.profit}" step="0.01" placeholder="P&L $">
+                <span class="pl-percent-display" id="plPercent_${userId}_${itemKey}">
+                  ${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%
+                </span>
+                <button class="btn-sm profit" onclick="window.applySignalProfit('${userId}', '${itemKey}', 'profit', '${item.type}')">📈 Set</button>
+                <button class="btn-sm loss" onclick="window.applySignalProfit('${userId}', '${itemKey}', 'loss', '${item.type}')">📉 Set</button>
+                <button class="btn-sm edit" onclick="window.updateSignalProfitFromInput('${userId}', '${itemKey}', '${item.type}')">💾 Update</button>
+                <button class="btn-sm approve" onclick="window.toggleSignalStatus('${userId}', '${itemKey}', 'active', '${item.type}')">✅ Activate</button>
+                <button class="btn-sm decline" onclick="window.toggleSignalStatus('${userId}', '${itemKey}', 'expired', '${item.type}')">❌ Expire</button>
+              </div>
+            </div>
+          `;
+        });
+
+        html += `
+            <div style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid var(--glass-border); font-size:0.75rem;">
+              Total Cost: $${userTotalCost.toFixed(2)} | 
+              Total P&L: <span style="font-weight:700; color:${userTotalPL >= 0 ? 'var(--emerald-500)' : '#ef4444'};">${userTotalPL >= 0 ? '+' : ''}$${userTotalPL.toFixed(2)}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      const summaryHTML = `
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:0.5rem; margin-bottom:1rem; padding:0.75rem 1rem; background:var(--bg-tertiary); border-radius:var(--radius-lg); border:1px solid var(--glass-border);">
+          <div style="text-align:center;"><div style="font-size:1.2rem; font-weight:700;">${Object.keys(itemsByUser).length}</div><div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">Users</div></div>
+          <div style="text-align:center;"><div style="font-size:1.2rem; font-weight:700;">${totalItems}</div><div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">Total Items</div></div>
+        </div>
+      `;
+
+      container.innerHTML = summaryHTML + html;
+    }
+
+    window.updateSignalProfitFromInput = async function(userId, itemKey, itemType) {
+      const input = document.getElementById(`plAmount_${userId}_${itemKey}`);
+      if (!input) return;
+      
+      const newProfit = parseFloat(input.value);
+      if (isNaN(newProfit)) {
+        showToast('⚠️ Please enter a valid amount', 'error');
+        return;
+      }
+
+      await applySignalProfitToUser(userId, itemKey, newProfit, itemType);
+    };
+
+    window.applySignalProfit = async function(userId, itemKey, type, itemType) {
+      const input = document.getElementById(`plAmount_${userId}_${itemKey}`);
+      if (!input) return;
+      
+      let amount = parseFloat(input.value);
+      if (isNaN(amount) || amount === 0) {
+        showToast('⚠️ Please enter an amount', 'error');
+        return;
+      }
+
+      if (type === 'loss') {
+        amount = -Math.abs(amount);
+      } else {
+        amount = Math.abs(amount);
+      }
+
+      await applySignalProfitToUser(userId, itemKey, amount, itemType);
+    };
+
+    async function applySignalProfitToUser(userId, itemKey, newProfit, itemType) {
+      try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        const userData = userDoc.data();
+        
+        if (itemType === 'signal') {
+          const signals = userData.purchasedSignals || [];
+          let signalFound = false;
+          
+          const updatedSignals = signals.map(signal => {
+            if (signal.id === itemKey) {
+              signalFound = true;
+              const oldProfit = signal.signalProfit || 0;
+              const profitDiff = newProfit - oldProfit;
+              signal.signalProfit = newProfit;
+              if (newProfit > 0) {
+                signal.status = 'active';
+              }
+              return signal;
+            }
+            return signal;
+          });
+          
+          if (!signalFound) {
+            showToast('⚠️ Signal not found. Please refresh and try again.', 'error');
+            return;
+          }
+          
+          const oldSignal = signals.find(s => s.id === itemKey);
+          const profitDiff = oldSignal ? newProfit - (oldSignal.signalProfit || 0) : newProfit;
+          
+          await db.collection('users').doc(userId).update({
+            purchasedSignals: updatedSignals,
+            tradingProfit: firebase.firestore.FieldValue.increment(profitDiff),
+            balance: firebase.firestore.FieldValue.increment(profitDiff)
+          });
+          
+          showToast(`✅ ${profitDiff >= 0 ? 'Profit' : 'Loss'} of ${profitDiff >= 0 ? '+' : ''}$${Math.abs(profitDiff).toFixed(2)} applied to signal`, profitDiff >= 0 ? 'success' : 'info');
+          
+        } else if (itemType === 'trade') {
+          const orders = userData.orders || [];
+          let tradeFound = false;
+          
+          const updatedOrders = orders.map(order => {
+            if (order.id === itemKey) {
+              tradeFound = true;
+              const oldAdjustment = order.adminPLAdjustment || 0;
+              const price = ASSET_PRICES[order.symbol] || 0;
+              const quantity = order.quantity || 0;
+              const tradePrice = order.price || 0;
+              const cost = quantity * tradePrice;
+              const value = quantity * price;
+              const basePL = value - cost;
+              order.adminPLAdjustment = newProfit - basePL;
+              return order;
+            }
+            return order;
+          });
+          
+          if (!tradeFound) {
+            showToast('⚠️ Trade not found. Please refresh and try again.', 'error');
+            return;
+          }
+          
+          const oldOrder = orders.find(o => o.id === itemKey);
+          let profitDiff = 0;
+          if (oldOrder) {
+            const oldPrice = ASSET_PRICES[oldOrder.symbol] || 0;
+            const oldQuantity = oldOrder.quantity || 0;
+            const oldTradePrice = oldOrder.price || 0;
+            const oldCost = oldQuantity * oldTradePrice;
+            const oldValue = oldQuantity * oldPrice;
+            const oldBasePL = oldValue - oldCost;
+            const oldAdjustment = oldOrder.adminPLAdjustment || 0;
+            const oldTotalPL = oldBasePL + oldAdjustment;
+            profitDiff = newProfit - oldTotalPL;
+          }
+          
+          await db.collection('users').doc(userId).update({
+            orders: updatedOrders,
+            tradingProfit: firebase.firestore.FieldValue.increment(profitDiff),
+            balance: firebase.firestore.FieldValue.increment(profitDiff)
+          });
+          
+          showToast(`✅ ${profitDiff >= 0 ? 'Profit' : 'Loss'} of ${profitDiff >= 0 ? '+' : ''}$${Math.abs(profitDiff).toFixed(2)} applied to trade`, profitDiff >= 0 ? 'success' : 'info');
+        } else {
+          showToast('⚠️ Unknown item type', 'error');
+          return;
+        }
+        
+        await loadSignalManagement();
+        await loadAllUsers();
+
+      } catch (error) {
+        console.error('Error applying profit:', error);
+        showToast('❌ Error: ' + error.message, 'error');
+      }
+    }
+
+    window.toggleSignalStatus = async function(userId, itemKey, status, itemType) {
+      try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        const userData = userDoc.data();
+        
+        if (itemType === 'signal') {
+          const signals = userData.purchasedSignals || [];
+          let signalFound = false;
+          
+          const updatedSignals = signals.map(signal => {
+            if (signal.id === itemKey) {
+              signalFound = true;
+              signal.status = status;
+              return signal;
+            }
+            return signal;
+          });
+          
+          if (!signalFound) {
+            showToast('⚠️ Signal not found', 'error');
+            return;
+          }
+          
+          await db.collection('users').doc(userId).update({
+            purchasedSignals: updatedSignals
+          });
+          
+          showToast(`✅ Signal ${status === 'active' ? 'activated' : 'expired'}`, 'success');
+          
+        } else if (itemType === 'trade') {
+          const orders = userData.orders || [];
+          let tradeFound = false;
+          
+          const updatedOrders = orders.map(order => {
+            if (order.id === itemKey) {
+              tradeFound = true;
+              order.status = status;
+              return order;
+            }
+            return order;
+          });
+          
+          if (!tradeFound) {
+            showToast('⚠️ Trade not found', 'error');
+            return;
+          }
+          
+          await db.collection('users').doc(userId).update({
+            orders: updatedOrders
+          });
+          
+          showToast(`✅ Trade ${status === 'active' ? 'activated' : 'expired'}`, 'success');
+        }
+        
+        await loadSignalManagement();
+
+      } catch (error) {
+        console.error('Error toggling status:', error);
+        showToast('❌ Error: ' + error.message, 'error');
+      }
+    };
+
+    // ============================================
+    // TRADE HISTORY (VIEW ONLY)
+    // ============================================
+
+    window.loadTradeHistory = async function() {
+      const container = document.getElementById('tradeHistoryContainer');
+      
+      container.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <div style="margin-top:0.5rem;">Loading trade history...</div>
+        </div>
+      `;
+
+      try {
+        const snapshot = await db.collection('users').get();
+        let allTrades = [];
+        
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.role === 'admin') return;
+          
+          const orders = data.orders || [];
+          orders.forEach(order => {
+            allTrades.push({
+              userId: doc.id,
+              userDisplayName: data.displayName || 'User',
+              userEmail: data.email || 'No email',
+              ...order,
+              orderId: order.id || Date.now().toString()
+            });
+          });
+        });
+
+        allTrades.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        renderTradeHistory(allTrades);
+
+      } catch (error) {
+        console.error('Error loading trade history:', error);
+        container.innerHTML = `<div class="empty-state">⚠️ Error: ${error.message}</div>`;
+      }
+    };
+
+    function renderTradeHistory(allTrades) {
+      const container = document.getElementById('tradeHistoryContainer');
+      
+      if (allTrades.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="padding:3rem;">
+            <div style="font-size:3rem; margin-bottom:1rem;">📊</div>
+            <h3 style="color:var(--text-primary); margin-bottom:0.5rem;">No Trades Found</h3>
+            <p style="color:var(--text-muted);">No trades have been made yet.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      const tradesByUser = {};
+      allTrades.forEach(trade => {
+        if (!tradesByUser[trade.userId]) {
+          tradesByUser[trade.userId] = {
+            userDisplayName: trade.userDisplayName,
+            userEmail: trade.userEmail,
+            trades: []
+          };
+        }
+        tradesByUser[trade.userId].trades.push(trade);
+      });
+
+      for (const [userId, data] of Object.entries(tradesByUser)) {
+        const trades = data.trades;
+        let totalPL = 0;
+        let totalValue = 0;
+        
+        html += `
+          <div class="trade-history-card">
+            <div class="trade-history-header">
+              <div>
+                <span style="font-weight:600; font-size:0.95rem;">${data.userDisplayName}</span>
+                <span style="font-size:0.65rem; color:var(--text-muted); margin-left:0.5rem;">${data.userEmail}</span>
+                <span style="font-size:0.6rem; color:var(--text-muted); margin-left:0.5rem;">${trades.length} trades</span>
+              </div>
+            </div>
+        `;
+
+        trades.forEach(trade => {
+          const price = ASSET_PRICES[trade.symbol] || 0;
+          const quantity = trade.quantity || 0;
+          const tradePrice = trade.price || 0;
+          const value = quantity * price;
+          const cost = quantity * tradePrice;
+          const basePL = value - cost;
+          const adjustment = trade.adminPLAdjustment || 0;
+          const pl = basePL + adjustment;
+          totalPL += pl;
+          totalValue += value;
+          
+          const plColor = pl >= 0 ? 'positive' : 'negative';
+          const typeLabel = trade.type || 'Trade';
+          const statusClass = trade.status === 'filled' ? 'status-active' : trade.status === 'pending' ? 'status-pending' : 'status-inactive';
+
+          html += `
+            <div class="trade-item" style="border-left-color: ${pl >= 0 ? 'var(--emerald-500)' : '#ef4444'};">
+              <span class="trade-symbol">${trade.symbol}</span>
+              <span class="trade-details">
+                ${typeLabel} • ${quantity} shares • @ $${tradePrice.toFixed(2)}
+                ${trade.date ? `• ${new Date(trade.date).toLocaleString()}` : ''}
+                <span class="status-badge ${statusClass}" style="font-size:0.5rem;">${trade.status || 'pending'}</span>
+                ${adjustment !== 0 ? `<span style="font-size:0.5rem; color:var(--text-muted);">(adj: $${adjustment.toFixed(2)})</span>` : ''}
+              </span>
+              <span class="trade-pl ${plColor}">
+                ${pl >= 0 ? '+' : ''}$${pl.toFixed(2)}
+              </span>
+            </div>
+          `;
+        });
+
+        const totalPLColor = totalPL >= 0 ? 'positive' : 'negative';
+        html += `
+            <div style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid var(--glass-border); font-size:0.8rem;">
+              Total Trades: ${trades.length} | 
+              Total Value: $${totalValue.toFixed(2)} | 
+              <span class="${totalPLColor}">Total P&L: ${totalPL >= 0 ? '+' : ''}$${totalPL.toFixed(2)}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ============================================
+    // PLAN MANAGEMENT
+    // ============================================
+
+    window.loadPlanManagement = async function() {
+      const container = document.getElementById('planManagementContainer');
+      
+      container.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <div style="margin-top:0.5rem;">Loading user plans...</div>
+        </div>
+      `;
+
+      try {
+        const snapshot = await db.collection('users').get();
+        let userPlans = [];
+        
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.role === 'admin') return;
+          
+          userPlans.push({
+            userId: doc.id,
+            displayName: data.displayName || 'User',
+            email: data.email || 'No email',
+            tier: data.tier || 'basic',
+            kycStatus: data.kycStatus || 'not_submitted',
+            balance: data.balance || 0,
+            tradingProfit: data.tradingProfit || 0,
+            totalDeposits: data.totalDeposits || 0
+          });
+        });
+
+        renderPlanManagement(userPlans);
+
+      } catch (error) {
+        console.error('Error loading plans:', error);
+        container.innerHTML = `<div class="empty-state">⚠️ Error: ${error.message}</div>`;
+      }
+    };
+
+    function renderPlanManagement(userPlans) {
+      const container = document.getElementById('planManagementContainer');
+      
+      if (userPlans.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="padding:3rem;">
+            <div style="font-size:3rem; margin-bottom:1rem;">⬆</div>
+            <h3 style="color:var(--text-primary); margin-bottom:0.5rem;">No Users Found</h3>
+          </div>
+        `;
+        return;
+      }
+
+      const tierNames = { basic: 'Basic', premium: 'Premium', vip: 'VIP', elite: 'Elite' };
+      const tierColors = { basic: '#666', premium: '#3b82f6', vip: '#f59e0b', elite: '#e82127' };
+      const tierBenefits = {
+        basic: 'Basic signals, Community chat, 1x leverage',
+        premium: 'All signals, 2x leverage, Priority support, Advanced charting',
+        vip: 'Everything in Premium + Exclusive signals, 5x leverage, Personal advisor',
+        elite: 'Everything in VIP + Elite signals, 10x leverage, Direct access to traders'
+      };
+
+      let html = `
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; margin-bottom:1rem;">
+          ${Object.entries(tierNames).map(([key, name]) => `
+            <div style="background:var(--bg-card); border:1px solid ${tierColors[key]}; border-radius:var(--radius-md); padding:1rem; text-align:center;">
+              <div style="font-weight:700; font-size:1.1rem; color:${tierColors[key]};">${name}</div>
+              <div style="font-size:0.7rem; color:var(--text-muted); margin:0.25rem 0;">${tierBenefits[key]}</div>
+              <div style="font-size:0.8rem; font-weight:600;">${userPlans.filter(u => u.tier === key).length} users</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      html += `
+        <div class="plan-management-card" style="margin-top:0.5rem;">
+          <div style="font-weight:600; font-size:0.85rem; margin-bottom:0.75rem; color:var(--text-secondary);">User Plan Management</div>
+      `;
+
+      userPlans.forEach(user => {
+        html += `
+          <div class="plan-item">
+            <span class="plan-name">${user.displayName}</span>
+            <span class="plan-details">
+              ${user.email}
+              <span style="margin-left:0.5rem; font-size:0.6rem; color:var(--text-muted);">
+                Deposits: $${user.totalDeposits.toFixed(2)}
+              </span>
+            </span>
+            <span class="plan-cost" style="color:${tierColors[user.tier] || '#666'};">
+              ${tierNames[user.tier] || 'Basic'}
+            </span>
+            <div class="plan-actions">
+              <select class="form-input" style="padding:0.2rem 0.4rem; font-size:0.65rem; width:100px; background:var(--bg-card); border:1px solid var(--glass-border); border-radius:4px; color:var(--text-primary);" id="planSelect_${user.userId}">
+                <option value="basic" ${user.tier === 'basic' ? 'selected' : ''}>Basic</option>
+                <option value="premium" ${user.tier === 'premium' ? 'selected' : ''}>Premium</option>
+                <option value="vip" ${user.tier === 'vip' ? 'selected' : ''}>VIP</option>
+                <option value="elite" ${user.tier === 'elite' ? 'selected' : ''}>Elite</option>
+              </select>
+              <button class="btn-sm upgrade" onclick="window.updateUserPlan('${user.userId}')">💾 Update</button>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    window.updateUserPlan = async function(userId) {
+      const select = document.getElementById(`planSelect_${userId}`);
+      if (!select) return;
+      
+      const newTier = select.value;
+      
+      try {
+        await db.collection('users').doc(userId).update({
+          tier: newTier
+        });
+
+        showToast(`✅ User plan updated to ${newTier}`, 'success');
+        await loadPlanManagement();
+        await loadAllUsers();
+
+      } catch (error) {
+        console.error('Error updating plan:', error);
+        showToast('❌ Error: ' + error.message, 'error');
+      }
+    };
+
+    // ============================================
+    // CRYPTO ADDRESSES
+    // ============================================
+
+    window.loadCryptoAddresses = async function() {
+      const container = document.getElementById('cryptoAddressesContainer');
+      
+      container.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <div style="margin-top:0.5rem;">Loading crypto addresses...</div>
+        </div>
+      `;
+
+      try {
+        const doc = await db.collection('settings').doc('cryptoAddresses').get();
+        
+        if (doc.exists) {
+          cryptoAddressesData = doc.data();
+        } else {
+          await db.collection('settings').doc('cryptoAddresses').set(DEFAULT_CRYPTO_ADDRESSES);
+          cryptoAddressesData = { ...DEFAULT_CRYPTO_ADDRESSES };
+        }
+
+        renderCryptoAddresses();
+
+      } catch (error) {
+        console.error('Error loading crypto addresses:', error);
+        container.innerHTML = `<div class="empty-state">⚠️ Error: ${error.message}</div>`;
+      }
+    };
+
+    function renderCryptoAddresses() {
+      const container = document.getElementById('cryptoAddressesContainer');
+      
+      if (!cryptoAddressesData || Object.keys(cryptoAddressesData).length === 0) {
+        container.innerHTML = `<div class="empty-state">No addresses configured</div>`;
+        return;
+      }
+
+      const cryptos = ['BTC', 'ETH', 'USDT'];
+      const cryptoIcons = { 'BTC': '₿', 'ETH': 'Ξ', 'USDT': '₮' };
+      const cryptoColors = { 'BTC': '#f59e0b', 'ETH': '#8b5cf6', 'USDT': '#10b981' };
+      
+      let html = '';
+
+      cryptos.forEach(symbol => {
+        const data = cryptoAddressesData[symbol] || { address: '', network: '', minDeposit: '' };
+        
+        html += `
+          <div class="address-edit-card">
+            <div class="crypto-label" style="color:${cryptoColors[symbol]};">
+              ${cryptoIcons[symbol]} ${symbol} - ${symbol === 'BTC' ? 'Bitcoin' : symbol === 'ETH' ? 'Ethereum' : 'Tether'}
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Deposit Address</label>
+                <input type="text" class="form-input" id="addr_${symbol}" value="${data.address || ''}" placeholder="Enter wallet address">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Network</label>
+                <input type="text" class="form-input" id="network_${symbol}" value="${data.network || ''}" placeholder="e.g. Bitcoin, ERC-20, TRC-20">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Minimum Deposit</label>
+              <input type="text" class="form-input" id="min_${symbol}" value="${data.minDeposit || ''}" placeholder="e.g. 0.0001 BTC">
+            </div>
+            <button class="btn-save-address" onclick="window.saveCryptoAddress('${symbol}')">💾 Save ${symbol} Address</button>
+            <div class="address-status" id="status_${symbol}">Ready to save</div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    window.saveCryptoAddress = async function(symbol) {
+      const address = document.getElementById(`addr_${symbol}`).value.trim();
+      const network = document.getElementById(`network_${symbol}`).value.trim();
+      const minDeposit = document.getElementById(`min_${symbol}`).value.trim();
+      const statusEl = document.getElementById(`status_${symbol}`);
+
+      if (!address) {
+        statusEl.textContent = '❌ Please enter a wallet address';
+        statusEl.className = 'address-status error';
+        return;
+      }
+
+      try {
+        statusEl.textContent = '⏳ Saving...';
+        statusEl.className = 'address-status';
+
+        const updatedData = { ...cryptoAddressesData };
+        updatedData[symbol] = {
+          address: address,
+          network: network || (symbol === 'BTC' ? 'Bitcoin' : symbol === 'ETH' ? 'Ethereum (ERC-20)' : 'TRC-20'),
+          minDeposit: minDeposit || (symbol === 'BTC' ? '0.0001 BTC' : symbol === 'ETH' ? '0.01 ETH' : '10 USDT')
+        };
+
+        await db.collection('settings').doc('cryptoAddresses').set(updatedData);
+        cryptoAddressesData = updatedData;
+
+        statusEl.textContent = '✅ Address saved successfully!';
+        statusEl.className = 'address-status success';
+        showToast(`✅ ${symbol} address updated`, 'success');
+
+        setTimeout(() => {
+          statusEl.textContent = 'Ready to save';
+          statusEl.className = 'address-status';
+        }, 3000);
+
+      } catch (error) {
+        console.error('Error saving address:', error);
+        statusEl.textContent = '❌ Error: ' + error.message;
+        statusEl.className = 'address-status error';
+        showToast('❌ Error saving address: ' + error.message, 'error');
+      }
+    };
+
+    // ============================================
+    // EDIT MODAL FUNCTIONS
+    // ============================================
+
+    window.openEditModal = async function(uid) {
+      const user = allUsers.find(u => u.uid === uid);
+      if (!user) {
+        showToast('❌ User not found', 'error');
+        return;
+      }
+
+      editingUser = user;
+      originalUserData = JSON.parse(JSON.stringify(user));
+      
+      currentEditData = JSON.parse(JSON.stringify(user));
+      delete currentEditData.createdAt;
+      delete currentEditData.lastLogin;
+      delete currentEditData.uid;
+
+      document.getElementById('editModalUserName').textContent = user.displayName || 'User';
+      document.getElementById('editModalUID').textContent = user.uid.substring(0, 20) + '...';
+      document.getElementById('editModalEmail').textContent = user.email || 'No email';
+      document.getElementById('editModalCreated').textContent = user.createdAt ? user.createdAt.toLocaleDateString() : 'Unknown';
+      document.getElementById('editModalStatusBadge').textContent = user.kycStatus === 'verified' ? '✅ Verified' : '📝 Pending';
+      document.getElementById('editModalStatusBadge').style.color = user.kycStatus === 'verified' ? 'var(--emerald-500)' : 'var(--gold-400)';
+
+      document.getElementById('editDisplayName').value = user.displayName || '';
+      document.getElementById('editEmail').value = user.email || '';
+      document.getElementById('editTier').value = user.tier || 'basic';
+      document.getElementById('editKYC').value = user.kycStatus || 'not_submitted';
+      document.getElementById('editBalance').value = user.balance || 0;
+      document.getElementById('editTradingProfit').value = user.tradingProfit || 0;
+      document.getElementById('editTotalDeposits').value = user.totalDeposits || 0;
+      document.getElementById('editReferralBonus').value = user.referralBonusBalance || 0;
+
+      renderCryptoBalances();
+      renderPortfolio();
+      renderSignalPurchases();
+      renderWatchlist();
+      renderOrders();
+      renderTransactions();
+
+      document.getElementById('editModalStatus').textContent = '';
+      document.getElementById('editModal').classList.add('active');
+    };
+
+    window.closeEditModal = function() {
+      document.getElementById('editModal').classList.remove('active');
+      editingUser = null;
+      originalUserData = null;
+      currentEditData = {};
+    };
+
+    // Render functions for modal
+    function renderCryptoBalances() {
+      const container = document.getElementById('cryptoBalancesContainer');
+      const balances = currentEditData.cryptoBalances || {};
+      const count = Object.keys(balances).length;
+      document.getElementById('cryptoCount').textContent = count;
+
+      if (count === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.75rem;">No crypto assets</p>';
+        return;
+      }
+
+      let html = '';
+      for (const [symbol, amount] of Object.entries(balances)) {
+        const price = ASSET_PRICES[symbol] || 0;
+        const value = amount * price;
+        html += `
+          <div class="crypto-item" style="display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0.5rem; background:var(--bg-card); border-radius:var(--radius-sm); margin-bottom:0.3rem;">
+            <span style="font-weight:700; color:var(--gold-400); min-width:40px;">${symbol}</span>
+            <input type="number" class="crypto-input" value="${amount}" 
+                   data-symbol="${symbol}" step="0.0001"
+                   onchange="window.updateCryptoBalance('${symbol}', this.value)"
+                   style="flex:1; padding:0.2rem 0.4rem; background:var(--bg-tertiary); border:1px solid var(--glass-border); border-radius:4px; color:var(--text-primary); font-size:0.8rem;">
+            <span style="font-size:0.65rem; color:var(--text-muted); min-width:80px;">$${value.toFixed(2)}</span>
+            <button class="crypto-remove" onclick="window.removeCryptoBalance('${symbol}')" style="background:#ef4444; color:#fff; border:none; border-radius:4px; padding:0.15rem 0.5rem; cursor:pointer; font-size:0.7rem;">✕</button>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    window.updateCryptoBalance = function(symbol, value) {
+      if (!currentEditData.cryptoBalances) currentEditData.cryptoBalances = {};
+      currentEditData.cryptoBalances[symbol] = parseFloat(value) || 0;
+      renderCryptoBalances();
+    };
+
+    window.removeCryptoBalance = function(symbol) {
+      if (!currentEditData.cryptoBalances) return;
+      delete currentEditData.cryptoBalances[symbol];
+      renderCryptoBalances();
+      showToast(`🗑️ Removed ${symbol}`, 'info');
+    };
+
+    window.addCryptoAsset = function() {
+      const symbol = prompt('Enter crypto symbol (e.g., BTC, ETH, SOL):');
+      if (!symbol) return;
+      const cleanSymbol = symbol.trim().toUpperCase();
+      if (!cleanSymbol) return;
+      
+      if (!currentEditData.cryptoBalances) currentEditData.cryptoBalances = {};
+      if (currentEditData.cryptoBalances[cleanSymbol] !== undefined) {
+        showToast('⚠️ Asset already exists', 'error');
+        return;
+      }
+      
+      currentEditData.cryptoBalances[cleanSymbol] = 0;
+      renderCryptoBalances();
+      showToast(`✅ Added ${cleanSymbol}`, 'success');
+    };
+
+    function renderPortfolio() {
+      const container = document.getElementById('portfolioContainer');
+      const portfolio = currentEditData.portfolio || {};
+      const count = Object.keys(portfolio).length;
+      document.getElementById('portfolioCount').textContent = count;
+
+      if (count === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.75rem;">No portfolio items</p>';
+        return;
+      }
+
+      let html = '';
+      let totalPL = 0;
+      let totalCost = 0;
+      let totalValue = 0;
+      
+      for (const [symbol, holding] of Object.entries(portfolio)) {
+        const price = ASSET_PRICES[symbol] || 0;
+        const shares = holding.shares || 0;
+        const avgPrice = holding.avgPrice || 0;
+        const cost = shares * avgPrice;
+        const value = shares * price;
+        let pl = value - cost;
+        const adminAdjustment = holding.adminPLAdjustment || 0;
+        const displayedPL = pl + adminAdjustment;
+        
+        totalPL += displayedPL;
+        totalCost += cost;
+        totalValue += value;
+        
+        html += `
+          <div style="background:var(--bg-card); border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:0.5rem 0.75rem; margin-bottom:0.3rem;">
+            <div style="display:flex; gap:0.3rem; flex-wrap:wrap; align-items:center;">
+              <span style="font-weight:700; min-width:60px; color:var(--gold-400);">${symbol}</span>
+              <div style="flex:1; min-width:80px;">
+                <label style="display:block; font-size:0.55rem; color:var(--text-muted); text-transform:uppercase;">Shares</label>
+                <input type="number" step="0.0001" value="${shares}" 
+                       onchange="window.updatePortfolioHolding('${symbol}', 'shares', this.value)"
+                       style="width:100%; padding:0.15rem 0.3rem; background:var(--bg-tertiary); border:1px solid var(--glass-border); border-radius:4px; color:var(--text-primary); font-size:0.75rem;">
+              </div>
+              <div style="flex:1; min-width:80px;">
+                <label style="display:block; font-size:0.55rem; color:var(--text-muted); text-transform:uppercase;">Avg Price</label>
+                <input type="number" step="0.01" value="${avgPrice}" 
+                       onchange="window.updatePortfolioHolding('${symbol}', 'avgPrice', this.value)"
+                       style="width:100%; padding:0.15rem 0.3rem; background:var(--bg-tertiary); border:1px solid var(--glass-border); border-radius:4px; color:var(--text-primary); font-size:0.75rem;">
+              </div>
+              <div style="flex:1; min-width:80px;">
+                <label style="display:block; font-size:0.55rem; color:var(--text-muted); text-transform:uppercase;">Adjustment</label>
+                <input type="number" step="0.01" value="${adminAdjustment}" 
+                       onchange="window.updatePortfolioHolding('${symbol}', 'adminPLAdjustment', this.value)"
+                       style="width:100%; padding:0.15rem 0.3rem; background:var(--bg-tertiary); border:1px solid var(--glass-border); border-radius:4px; color:var(--text-primary); font-size:0.75rem;">
+              </div>
+              <button onclick="window.removePortfolioItem('${symbol}')" style="background:#ef4444; color:#fff; border:none; border-radius:4px; padding:0.15rem 0.5rem; cursor:pointer; font-size:0.6rem;">✕</button>
+            </div>
+            <div style="margin-top:0.2rem; font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:4px; background:var(--bg-tertiary);">
+              Cost: $${cost.toFixed(2)} | Value: $${value.toFixed(2)} | 
+              <span style="color:${displayedPL >= 0 ? 'var(--emerald-500)' : '#ef4444'};">${displayedPL >= 0 ? '📈' : '📉'} P&L: $${displayedPL.toFixed(2)}</span>
+            </div>
+          </div>
+        `;
+      }
+      
+      const totalPLColor = totalPL >= 0 ? 'var(--emerald-500)' : '#ef4444';
+      html += `
+        <div style="background:var(--bg-card); border-radius:var(--radius-sm); padding:0.5rem 0.75rem; font-size:0.75rem; border:1px solid var(--glass-border);">
+          <strong>📊 Summary:</strong> Cost $${totalCost.toFixed(2)} | Value $${totalValue.toFixed(2)} | 
+          <span style="color:${totalPLColor};">P&L $${totalPL.toFixed(2)}</span>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    window.updatePortfolioHolding = function(symbol, field, value) {
+      if (!currentEditData.portfolio) currentEditData.portfolio = {};
+      if (!currentEditData.portfolio[symbol]) currentEditData.portfolio[symbol] = { shares: 0, avgPrice: 0 };
+      
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) return;
+      
+      if (field === 'shares') {
+        currentEditData.portfolio[symbol].shares = numValue;
+      } else if (field === 'avgPrice') {
+        currentEditData.portfolio[symbol].avgPrice = numValue;
+      } else if (field === 'adminPLAdjustment') {
+        currentEditData.portfolio[symbol].adminPLAdjustment = numValue;
+      }
+      
+      renderPortfolio();
+    };
+
+    window.addPortfolioItem = function() {
+      const symbol = prompt('Enter stock symbol (e.g., TSLA, AAPL, NVDA):');
+      if (!symbol) return;
+      const cleanSymbol = symbol.trim().toUpperCase();
+      if (!cleanSymbol) return;
+      
+      if (!currentEditData.portfolio) currentEditData.portfolio = {};
+      if (currentEditData.portfolio[cleanSymbol]) {
+        showToast('⚠️ Stock already in portfolio', 'error');
+        return;
+      }
+      
+      const shares = prompt('Enter number of shares:');
+      if (shares === null) return;
+      const sharesNum = parseFloat(shares) || 0;
+      
+      const avgPrice = prompt('Enter average purchase price:');
+      if (avgPrice === null) return;
+      const avgPriceNum = parseFloat(avgPrice) || 0;
+      
+      currentEditData.portfolio[cleanSymbol] = {
+        shares: sharesNum,
+        avgPrice: avgPriceNum,
+        adminPLAdjustment: 0
+      };
+      
+      if (!ASSET_PRICES[cleanSymbol]) {
+        ASSET_PRICES[cleanSymbol] = avgPriceNum;
+      }
+      
+      renderPortfolio();
+      showToast(`✅ Added ${cleanSymbol} to portfolio`, 'success');
+    };
+
+    // FIXED: Delete portfolio item (holding) from user
+    window.removePortfolioItem = function(symbol) {
+      if (!currentEditData.portfolio) return;
+      if (!currentEditData.portfolio[symbol]) {
+        showToast('⚠️ Holding not found', 'error');
+        return;
+      }
+      
+      if (confirm(`🗑️ Remove ${symbol} from this user's portfolio?`)) {
+        delete currentEditData.portfolio[symbol];
+        renderPortfolio();
+        showToast(`🗑️ Removed ${symbol} from portfolio`, 'info');
+      }
+    };
+
+    function renderSignalPurchases() {
+      const container = document.getElementById('signalPurchasesContainer');
+      const signals = currentEditData.purchasedSignals || [];
+      const count = signals.length;
+      document.getElementById('signalPurchaseCount').textContent = count;
+
+      if (count === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.75rem;">No signal purchases</p>';
+        return;
+      }
+
+      let html = '';
+      signals.forEach((signal, index) => {
+        const profitColor = (signal.signalProfit || 0) >= 0 ? 'var(--emerald-500)' : '#ef4444';
+        html += `
+          <div style="background:var(--bg-card); border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:0.4rem 0.6rem; margin-bottom:0.3rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.3rem;">
+            <span style="font-weight:600; font-size:0.8rem; min-width:100px;">${signal.name || 'Signal'}</span>
+            <span style="font-size:0.7rem; color:var(--text-muted);">Cost: $${(signal.price || 0).toFixed(2)}</span>
+            <span style="font-size:0.7rem; font-weight:600; color:${profitColor};">P&L: $${(signal.signalProfit || 0).toFixed(2)}</span>
+            <span style="font-size:0.6rem; padding:0.1rem 0.3rem; border-radius:4px; background:${signal.status === 'active' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}; color:${signal.status === 'active' ? 'var(--emerald-500)' : '#ef4444'};">${signal.status || 'active'}</span>
+            <button onclick="window.removeSignalPurchase(${index})" style="background:#ef4444; color:#fff; border:none; border-radius:4px; padding:0.1rem 0.4rem; cursor:pointer; font-size:0.6rem;">✕</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    window.removeSignalPurchase = function(index) {
+      if (!currentEditData.purchasedSignals) return;
+      currentEditData.purchasedSignals.splice(index, 1);
+      renderSignalPurchases();
+      showToast('🗑️ Signal removed', 'info');
+    };
+
+    window.addSignalPurchase = function() {
+      const name = prompt('Signal name:');
+      if (!name) return;
+      const price = prompt('Purchase price:');
+      if (price === null) return;
+      const profit = prompt('Current profit/loss:');
+      if (profit === null) return;
+
+      if (!currentEditData.purchasedSignals) currentEditData.purchasedSignals = [];
+      currentEditData.purchasedSignals.push({
+        id: Date.now().toString(),
+        name: name,
+        price: parseFloat(price) || 0,
+        signalProfit: parseFloat(profit) || 0,
+        status: 'active',
+        purchasedAt: new Date().toISOString()
+      });
+      renderSignalPurchases();
+      showToast('✅ Signal added', 'success');
+    };
+
+    function renderWatchlist() {
+      const container = document.getElementById('watchlistContainer');
+      const watchlist = currentEditData.watchlist || [];
+      const count = watchlist.length;
+      document.getElementById('watchlistCount').textContent = count;
+
+      if (count === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.75rem;">No watchlist items</p>';
+        return;
+      }
+
+      let html = '';
+      watchlist.forEach((item, index) => {
+        html += `
+          <span style="display:inline-flex; align-items:center; gap:0.3rem; background:var(--bg-card); padding:0.15rem 0.5rem; border-radius:12px; font-size:0.7rem; margin:0.2rem; border:1px solid var(--glass-border);">
+            ${item}
+            <button onclick="window.removeWatchlistItem(${index})" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.8rem; padding:0 0.2rem;">✕</button>
+          </span>
+        `;
+      });
+      container.innerHTML = html + `
+        <div style="display:flex; gap:0.3rem; margin-top:0.3rem;">
+          <input type="text" class="form-input" id="watchlistInput" placeholder="Add symbol..." style="padding:0.2rem 0.4rem; font-size:0.7rem; flex:1;">
+          <button onclick="window.addWatchlistItem()" style="background:var(--emerald-500); color:#fff; border:none; padding:0.2rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.65rem;">Add</button>
+        </div>
+      `;
+    }
+
+    window.addWatchlistItem = function() {
+      const input = document.getElementById('watchlistInput');
+      const value = input ? input.value.trim() : prompt('Enter symbol to add:');
+      if (!value) return;
+      
+      if (!currentEditData.watchlist) currentEditData.watchlist = [];
+      currentEditData.watchlist.push(value);
+      if (input) input.value = '';
+      renderWatchlist();
+      showToast(`✅ Added ${value} to watchlist`, 'success');
+    };
+
+    window.removeWatchlistItem = function(index) {
+      if (!currentEditData.watchlist) return;
+      const removed = currentEditData.watchlist[index];
+      currentEditData.watchlist.splice(index, 1);
+      renderWatchlist();
+      showToast(`🗑️ Removed ${removed}`, 'info');
+    };
+
+    function renderOrders() {
+      const container = document.getElementById('ordersContainer');
+      const orders = currentEditData.orders || [];
+      const count = orders.length;
+      document.getElementById('orderCount').textContent = count;
+
+      if (count === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.75rem;">No orders</p>';
+        return;
+      }
+
+      let html = '';
+      orders.forEach((order, index) => {
+        html += `
+          <div style="background:var(--bg-card); border-left:3px solid var(--purple-500); border-radius:var(--radius-sm); padding:0.3rem 0.6rem; margin-bottom:0.3rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.3rem; font-size:0.7rem;">
+            <span style="font-weight:700; color:var(--purple-500);">${order.symbol || 'Order'}</span>
+            <span style="color:var(--text-muted);">${order.type || ''} ${order.quantity || 0} @ $${(order.price || 0).toFixed(2)}</span>
+            <span style="font-size:0.55rem; padding:0.1rem 0.3rem; border-radius:4px; background:${order.status === 'filled' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)'}; color:${order.status === 'filled' ? 'var(--emerald-500)' : 'var(--gold-400)'};">${order.status || 'pending'}</span>
+            <button onclick="window.removeOrder(${index})" style="background:#ef4444; color:#fff; border:none; border-radius:4px; padding:0.1rem 0.4rem; cursor:pointer; font-size:0.55rem;">✕</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    window.removeOrder = function(index) {
+      if (!currentEditData.orders) return;
+      currentEditData.orders.splice(index, 1);
+      renderOrders();
+      showToast('🗑️ Order removed', 'info');
+    };
+
+    window.addOrder = function() {
+      const symbol = prompt('Order symbol (TSLA/AAPL/BTC/etc):');
+      if (!symbol) return;
+      const type = prompt('Order type (Buy/Sell):');
+      if (!type) return;
+      const quantity = prompt('Quantity:');
+      if (quantity === null) return;
+      const price = prompt('Price:');
+      if (price === null) return;
+
+      if (!currentEditData.orders) currentEditData.orders = [];
+      currentEditData.orders.push({
+        symbol: symbol,
+        type: type,
+        quantity: parseFloat(quantity) || 0,
+        price: parseFloat(price) || 0,
+        status: 'pending',
+        date: new Date().toISOString(),
+        id: Date.now().toString()
+      });
+      renderOrders();
+      showToast('✅ Order added', 'success');
+    };
+
+    function renderTransactions() {
+      const container = document.getElementById('transactionsContainer');
+      const transactions = currentEditData.transactions || [];
+      const count = transactions.length;
+      document.getElementById('transactionCount').textContent = count;
+
+      if (count === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.75rem;">No transactions</p>';
+        return;
+      }
+
+      let html = '';
+      transactions.forEach((tx, index) => {
+        const typeClass = tx.type === 'Deposit' ? 'deposit' : tx.type === 'Withdraw' ? 'withdraw' : 'trade';
+        const statusClass = tx.status || 'pending';
+        html += `
+          <div style="background:var(--bg-card); border-left:3px solid ${tx.type === 'Deposit' ? 'var(--emerald-500)' : tx.type === 'Withdraw' ? '#ef4444' : 'var(--blue-500)'}; border-radius:var(--radius-sm); padding:0.3rem 0.6rem; margin-bottom:0.3rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.3rem; font-size:0.7rem;">
+            <span class="tx-type ${typeClass}" style="font-weight:600; color:${tx.type === 'Deposit' ? 'var(--emerald-500)' : tx.type === 'Withdraw' ? '#ef4444' : 'var(--blue-500)'};">${tx.type || 'Unknown'}</span>
+            <span style="color:var(--text-muted);">${tx.asset || ''} ${tx.amount || 0} • $${(tx.usdValue || 0).toFixed(2)}</span>
+            <span style="font-size:0.55rem; padding:0.1rem 0.3rem; border-radius:4px; background:${statusClass === 'completed' ? 'rgba(16,185,129,0.15)' : statusClass === 'pending' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)'}; color:${statusClass === 'completed' ? 'var(--emerald-500)' : statusClass === 'pending' ? 'var(--gold-400)' : '#ef4444'};">${statusClass}</span>
+            <button onclick="window.removeTransaction(${index})" style="background:#ef4444; color:#fff; border:none; border-radius:4px; padding:0.1rem 0.4rem; cursor:pointer; font-size:0.55rem;">✕</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    window.removeTransaction = function(index) {
+      if (!currentEditData.transactions) return;
+      currentEditData.transactions.splice(index, 1);
+      renderTransactions();
+      showToast('🗑️ Transaction removed', 'info');
+    };
+
+    window.addTransaction = function() {
+      const type = prompt('Transaction type (Deposit/Withdraw/Trade/Profit/Loss):');
+      if (!type) return;
+      const asset = prompt('Asset (BTC/ETH/USDT/etc):');
+      if (asset === null) return;
+      const amount = prompt('Amount:');
+      if (amount === null) return;
+      const usdValue = prompt('USD Value:');
+      if (usdValue === null) return;
+      const status = prompt('Status (completed/pending/failed):') || 'completed';
+
+      if (!currentEditData.transactions) currentEditData.transactions = [];
+      currentEditData.transactions.push({
+        type: type,
+        asset: asset,
+        amount: parseFloat(amount) || 0,
+        usdValue: parseFloat(usdValue) || 0,
+        status: status,
+        date: new Date().toISOString(),
+        id: Date.now().toString()
+      });
+      renderTransactions();
+      showToast('✅ Transaction added', 'success');
+    };
+
+    window.saveUserEdit = async function() {
+      if (!editingUser) {
+        showToast('❌ No user selected', 'error');
+        return;
+      }
+
+      try {
+        const updatedData = {
+          displayName: document.getElementById('editDisplayName').value.trim(),
+          email: document.getElementById('editEmail').value.trim(),
+          tier: document.getElementById('editTier').value,
+          kycStatus: document.getElementById('editKYC').value,
+          balance: parseFloat(document.getElementById('editBalance').value) || 0,
+          tradingProfit: parseFloat(document.getElementById('editTradingProfit').value) || 0,
+          totalDeposits: parseFloat(document.getElementById('editTotalDeposits').value) || 0,
+          referralBonusBalance: parseFloat(document.getElementById('editReferralBonus').value) || 0,
+          cryptoBalances: currentEditData.cryptoBalances || {},
+          portfolio: currentEditData.portfolio || {},
+          purchasedSignals: currentEditData.purchasedSignals || [],
+          watchlist: currentEditData.watchlist || [],
+          orders: currentEditData.orders || [],
+          transactions: currentEditData.transactions || []
+        };
+
+        await db.collection('users').doc(editingUser.uid).update(updatedData);
+        Object.assign(editingUser, updatedData);
+
+        document.getElementById('editModalStatus').textContent = '✅ All changes saved successfully!';
+        document.getElementById('editModalStatus').style.color = 'var(--emerald-500)';
+        showToast(`✅ Changes saved for ${editingUser.displayName || 'user'}`, 'success');
+        loadAllUsers();
+
+      } catch (error) {
+        document.getElementById('editModalStatus').textContent = `❌ Error: ${error.message}`;
+        document.getElementById('editModalStatus').style.color = '#ef4444';
+        showToast('❌ Error saving: ' + error.message, 'error');
+      }
+    };
+
+    // ============================================
+    // DELETE USER - FIXED: Deletes from Firebase
+    // ============================================
+
+    window.deleteUserFromModal = async function() {
+      if (!editingUser) return;
+      if (confirm(`⚠️ Are you sure you want to permanently delete user "${editingUser.displayName || editingUser.email}"?\nThis will delete ALL user data from Firebase and CANNOT be undone!`)) {
+        await deleteUser(editingUser.uid);
+        closeEditModal();
+      }
+    };
+
+    window.deleteUser = async function(uid) {
+      if (!confirm(`⚠️ Permanently delete this user and all their data from Firebase?\nThis CANNOT be undone!`)) return;
+
+      try {
+        // Delete the user document from Firebase
+        await db.collection('users').doc(uid).delete();
+        
+        // Remove from local array
+        allUsers = allUsers.filter(u => u.uid !== uid);
+        
+        // Refresh the user table
+        renderUserTable(allUsers);
+        
+        // Update stats
+        document.getElementById('statUsers').textContent = allUsers.length;
+        
+        showToast(`🗑️ User deleted from Firebase successfully`, 'success');
+        
+        // Refresh all data
+        loadAllUsers();
+        
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        showToast('❌ Error deleting user: ' + error.message, 'error');
+      }
+    };
+
+    // ============================================
+    // VIEW ALL TRANSACTIONS
+    // ============================================
+
+    window.viewAllTransactions = function() {
+      allTransactionsCache = [];
+      allUsers.forEach(user => {
+        const txs = user.transactions || [];
+        txs.forEach(tx => {
+          allTransactionsCache.push({
+            user: user.displayName || 'User',
+            userEmail: user.email || '',
+            userUID: user.uid,
+            ...tx
+          });
+        });
+      });
+
+      allTransactionsCache.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      renderTransactionsTable(allTransactionsCache);
+      document.getElementById('transactionsModal').classList.add('active');
+    };
+
+    function renderTransactionsTable(txs) {
+      const tbody = document.getElementById('transactionsTableBody');
+      if (!txs || txs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:1rem; color:var(--text-muted);">No transactions found.</td></tr>';
+        return;
+      }
+
+      let html = '';
+      txs.forEach(tx => {
+        const statusClass = tx.status === 'completed' ? 'status-active' : tx.status === 'pending' ? 'status-pending' : 'status-inactive';
+        html += `
+          <tr>
+            <td><strong>${tx.user}</strong><br><span style="font-size:0.6rem; color:var(--text-muted);">${tx.userUID.substring(0, 10)}...</span></td>
+            <td>${tx.type || 'Unknown'}</td>
+            <td>${tx.asset || '-'}</td>
+            <td>${tx.amount || 0}</td>
+            <td>$${(tx.usdValue || 0).toFixed(2)}</td>
+            <td><span class="status-badge ${statusClass}">${tx.status || 'pending'}</span></td>
+            <td style="font-size:0.65rem; color:var(--text-muted);">${tx.date ? new Date(tx.date).toLocaleString() : 'Unknown'}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    window.closeTransactionsModal = function() {
+      document.getElementById('transactionsModal').classList.remove('active');
+    };
+
+    // ============================================
+    // EXPORT FUNCTIONS
+    // ============================================
+
+    window.exportAllUsers = function() {
+      if (!allUsers || allUsers.length === 0) {
+        showToast('❌ No users to export', 'error');
+        return;
+      }
+
+      const data = allUsers.map(user => ({
+        uid: user.uid,
+        displayName: user.displayName,
+        email: user.email,
+        balance: user.balance,
+        tradingProfit: user.tradingProfit,
+        totalDeposits: user.totalDeposits,
+        referralBonusBalance: user.referralBonusBalance,
+        totalValue: calculateUserValue(user),
+        tier: user.tier,
+        kycStatus: user.kycStatus,
+        cryptoBalances: JSON.stringify(user.cryptoBalances),
+        portfolio: JSON.stringify(user.portfolio),
+        purchasedSignals: JSON.stringify(user.purchasedSignals),
+        watchlist: JSON.stringify(user.watchlist),
+        transactions: (user.transactions || []).length,
+        createdAt: user.createdAt ? user.createdAt.toISOString() : '',
+        lastLogin: user.lastLogin ? user.lastLogin.toISOString() : ''
+      }));
+
+      const csv = convertToCSV(data);
+      downloadFile(csv, 'users_export.csv', 'text/csv');
+      showToast(`📥 Exported ${data.length} users`, 'success');
+    };
+
+    window.exportTransactions = function() {
+      if (!allTransactionsCache || allTransactionsCache.length === 0) {
+        showToast('❌ No transactions to export', 'error');
+        return;
+      }
+
+      const data = allTransactionsCache.map(tx => ({
+        user: tx.user,
+        email: tx.userEmail,
+        type: tx.type,
+        asset: tx.asset,
+        amount: tx.amount,
+        usdValue: tx.usdValue,
+        status: tx.status,
+        date: tx.date ? new Date(tx.date).toISOString() : ''
+      }));
+
+      const csv = convertToCSV(data);
+      downloadFile(csv, 'transactions_export.csv', 'text/csv');
+      showToast(`📥 Exported ${data.length} transactions`, 'success');
+    };
+
+    function convertToCSV(data) {
+      if (!data || data.length === 0) return '';
+      const headers = Object.keys(data[0]);
+      const rows = data.map(obj => headers.map(key => {
+        const val = obj[key] !== undefined ? obj[key] : '';
+        return typeof val === 'string' && (val.includes(',') || val.includes('"')) ? `"${val.replace(/"/g, '""')}"` : val;
+      }).join(','));
+      return [headers.join(','), ...rows].join('\n');
+    }
+
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ============================================
+    // TOAST NOTIFICATIONS
+    // ============================================
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(50px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // ============================================
+    // INIT
+    // ============================================
+
+    document.addEventListener('DOMContentLoaded', function() {
+      checkAdminSetup();
+      
+      if (auth.currentUser) {
+        auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            try {
+              const adminDoc = await db.collection('admins').doc('adminAccount').get();
+              if (adminDoc.exists && adminDoc.data().uid === user.uid) {
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('adminDashboard').classList.add('active');
+                document.getElementById('adminUserInfo').textContent = `Logged in as: ${user.email}`;
+                loadAllUsers();
+              }
+            } catch (error) {
+              console.warn('Auto-login check failed:', error);
+            }
+          }
+        });
+      }
+    });
+
+    console.log('✅ Admin Dashboard Loaded:');
+    console.log('✅ Delete User - Now permanently removes user from Firebase');
+    console.log('✅ Delete Holdings - Remove portfolio items from user');
+  </script>
+</body>
+</html>
